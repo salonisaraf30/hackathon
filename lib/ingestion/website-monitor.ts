@@ -3,6 +3,7 @@ import crypto from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/server";
+import { indexSignalInNia } from "@/lib/intelligence/nia-client";
 import { extractSignalsFromDiff } from "./signal-extractor";
 
 export async function monitorWebsite(
@@ -94,11 +95,40 @@ export async function monitorWebsite(
 		raw_content: textContent.substring(0, 10000),
 	}));
 
-	const { error: signalInsertError } = await supabase.from("signals").insert(rows);
+	const { data: insertedSignals, error: signalInsertError } = await supabase
+		.from("signals")
+		.insert(rows)
+		.select();
 
 	if (signalInsertError) {
 		console.error("Failed to store extracted signals:", signalInsertError);
+		return [];
 	}
 
-	return signals;
+	for (const insertedSignal of insertedSignals ?? []) {
+		try {
+			await indexSignalInNia({
+				id: insertedSignal.id,
+				competitor_id: insertedSignal.competitor_id,
+				signal_type: insertedSignal.signal_type,
+				title: insertedSignal.title,
+				summary: insertedSignal.summary,
+				detected_at: insertedSignal.detected_at,
+				importance_score: insertedSignal.importance_score,
+			});
+
+			const { error: markIndexedError } = await supabase
+				.from("signals")
+				.update({ nia_indexed: true })
+				.eq("id", insertedSignal.id);
+
+			if (markIndexedError) {
+				console.error("Failed to mark signal as Nia indexed:", markIndexedError);
+			}
+		} catch (error) {
+			console.error("Failed to index in Nia:", error);
+		}
+	}
+
+	return insertedSignals ?? [];
 }

@@ -39,7 +39,8 @@ export async function generateDigest(
 		.from("user_products")
 		.select("*")
 		.eq("user_id", userId)
-		.single<ProductRow>();
+		.limit(1)
+		.maybeSingle<ProductRow>();
 
 	if (!product) {
 		throw new Error("User has no product info. Complete onboarding first.");

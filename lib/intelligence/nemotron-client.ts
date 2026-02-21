@@ -127,7 +127,8 @@ export async function callNemotron(prompt: string): Promise<NemotronResponse> {
 				"Content-Type": "application/json",
 			},
 			body: JSON.stringify({
-				model: "nvidia/llama-3.1-nemotron-70b-instruct",
+				 model: "nvidia/llama-3.1-nemotron-70b-instruct",
+				//model: "nvidia/llama-3.1-nemotron-ultra-253b-v1",
 				messages: [{ role: "user", content: prompt }],
 				temperature: 0.3,
 				response_format: { type: "json_object" },
