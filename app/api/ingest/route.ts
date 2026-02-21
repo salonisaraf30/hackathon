@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as cheerio from "cheerio";
 import crypto from "crypto";
 import Anthropic from "@anthropic-ai/sdk";
+import { indexSignalInNia } from "@/lib/intelligence/nia-client";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -296,10 +297,23 @@ Example:
     return [];
   }
 
-  // TODO: Index in Nia for context retrieval
-  // for (const signal of insertedSignals) {
-  //   await indexSignalInNia(signal);
-  // }
+  await Promise.allSettled(
+    (insertedSignals ?? []).map(async (signal: any) => {
+      const indexed = await indexSignalInNia({
+        id: signal.id,
+        competitor_id: signal.competitor_id,
+        signal_type: signal.signal_type,
+        title: signal.title,
+        summary: signal.summary,
+        detected_at: signal.detected_at,
+        importance_score: signal.importance_score,
+      });
+
+      if (!indexed) {
+        console.warn("Nia indexing skipped/failed for signal", signal.id);
+      }
+    }),
+  );
 
   return insertedSignals;
 }

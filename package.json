@@ -8,7 +8,8 @@
     "test:signal-extractor": "tsx scripts/test-signal-extractor.ts",
     "monitor:websites": "tsx scripts/run-website-monitor.ts",
     "test:ingestion": "tsx scripts/test-ingestion.ts",
-    "seed:demo": "tsx scripts/seed-demo-data.ts"
+    "seed:demo": "tsx scripts/seed-demo-data.ts",
+    "test:digest": "tsx scripts/test-digest-generator.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

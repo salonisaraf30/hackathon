@@ -5,6 +5,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { retrieveRelevantSignals } from "@/lib/intelligence/nia-client";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -72,15 +73,28 @@ export async function POST() {
       );
     }
 
-    // 4. (OPTIONAL) Retrieve relevant context from Nia
-    // If you have Nia set up, replace the signals above with a semantic retrieval call:
-    //
-    // const niaResults = await retrieveRelevantSignals(
-    //   `competitive analysis for ${userProduct.name}`,
-    //   competitorIds
-    // );
-    //
-    // This gives you more relevant signals than a simple date filter
+    // 4. Retrieve relevant context from Nia (falls back internally if unavailable)
+    const niaResults = await retrieveRelevantSignals(
+      `competitive analysis for ${userProduct.name}`,
+      competitorIds,
+      20,
+    );
+
+    const niaContextText =
+      niaResults.length > 0
+        ? niaResults
+            .slice(0, 10)
+            .map((item, index) => {
+              if (item && typeof item === "object") {
+                const maybeSignal = item as Record<string, unknown>;
+                if (typeof maybeSignal.title === "string") {
+                  return `[NIA ${index + 1}] ${maybeSignal.title} — ${String(maybeSignal.summary ?? "")}`;
+                }
+              }
+              return `[NIA ${index + 1}] ${JSON.stringify(item)}`;
+            })
+            .join("\n")
+        : "No additional Nia context available.";
 
     // 5. Build the prompt for Claude
     const signalsText = signals
@@ -101,6 +115,9 @@ export async function POST() {
 
 ## COMPETITIVE SIGNALS FROM THE PAST WEEK
 ${signalsText}
+
+## SEMANTIC CONTEXT (NIA)
+${niaContextText}
 
 ## YOUR TASK
 Generate a weekly competitive intelligence brief. Be SPECIFIC to this client's product — generic advice is useless.

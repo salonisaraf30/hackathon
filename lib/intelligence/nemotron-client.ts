@@ -19,6 +19,57 @@ const FALLBACK_RESPONSE: NemotronResponse = {
 	strategic_outlook: "",
 };
 
+function extractFirstJsonObject(text: string): string {
+	const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+	if (fenced?.[1]) {
+		return fenced[1].trim();
+	}
+
+	const firstBrace = text.indexOf("{");
+	if (firstBrace < 0) {
+		return text.trim();
+	}
+
+	let depth = 0;
+	let inString = false;
+	let escaped = false;
+
+	for (let index = firstBrace; index < text.length; index += 1) {
+		const char = text[index];
+
+		if (inString) {
+			if (escaped) {
+				escaped = false;
+				continue;
+			}
+			if (char === "\\") {
+				escaped = true;
+				continue;
+			}
+			if (char === '"') {
+				inString = false;
+			}
+			continue;
+		}
+
+		if (char === '"') {
+			inString = true;
+			continue;
+		}
+
+		if (char === "{") {
+			depth += 1;
+		} else if (char === "}") {
+			depth -= 1;
+			if (depth === 0) {
+				return text.slice(firstBrace, index + 1).trim();
+			}
+		}
+	}
+
+	return text.slice(firstBrace).trim();
+}
+
 function sanitizeNemotronResponse(value: unknown): NemotronResponse {
 	if (!value || typeof value !== "object") {
 		return FALLBACK_RESPONSE;
@@ -76,9 +127,10 @@ export async function callNemotron(prompt: string): Promise<NemotronResponse> {
 				"Content-Type": "application/json",
 			},
 			body: JSON.stringify({
-				model: "nvidia/nemotron-4-340b-instruct",
+				model: "nvidia/llama-3.1-nemotron-70b-instruct",
 				messages: [{ role: "user", content: prompt }],
 				temperature: 0.3,
+				response_format: { type: "json_object" },
 			}),
 		});
 
@@ -91,9 +143,8 @@ export async function callNemotron(prompt: string): Promise<NemotronResponse> {
 			choices?: Array<{ message?: { content?: string } }>;
 		};
 		const text = data.choices?.[0]?.message?.content ?? "";
-
-		const cleaned = text.replace(/```json|```/g, "").trim();
-		const parsed = JSON.parse(cleaned) as unknown;
+		const candidate = extractFirstJsonObject(text);
+		const parsed = JSON.parse(candidate) as unknown;
 		return sanitizeNemotronResponse(parsed);
 	} catch (error) {
 		console.error("Failed to parse Nemotron response:", error);

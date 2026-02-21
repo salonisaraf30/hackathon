@@ -1,6 +1,9 @@
+import { loadEnvConfig } from "@next/env";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 import { monitorWebsite } from "@/lib/ingestion/website-monitor";
+
+loadEnvConfig(process.cwd());
 
 function printUsage() {
   console.log(

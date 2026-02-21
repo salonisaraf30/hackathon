@@ -1,6 +1,10 @@
-import { extractSignalsFromDiff } from "@/lib/ingestion/signal-extractor";
+import { loadEnvConfig } from "@next/env";
+
+loadEnvConfig(process.cwd());
 
 async function run() {
+  const { extractSignalsFromDiff } = await import("@/lib/ingestion/signal-extractor");
+
   const oldContent = `
     Notion helps teams write docs, manage tasks, and collaborate.
     Pricing starts at $8 per member/month.
