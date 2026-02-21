@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+//import { supabase } from "@/lib/supabase/createClient";
 
 export function LoginForm({
   className,
@@ -45,6 +46,17 @@ export function LoginForm({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGoogleLogin = async () => {
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
+    });
+    if (error) setError(error.message);
   };
 
   return (
@@ -91,6 +103,15 @@ export function LoginForm({
               {error && <p className="text-sm text-red-500">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Logging in..." : "Login"}
+              </Button>
+              <Button 
+                type="button"
+                variant="outline"
+                className="w-full" 
+                onClick={handleGoogleLogin}
+                disabled={isLoading}
+              >
+                Sign in with Google
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
