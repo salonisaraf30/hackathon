@@ -16,16 +16,30 @@ const anthropic = new Anthropic({
 // Body: { competitor_id?: string } — if provided, scrape only this competitor
 // If no body, scrape all competitors (used by cron)
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
+  // Determine if this is a cron call or a user-triggered call
+  // Cron calls have no body and must include CRON_SECRET
+  // User-triggered calls include a competitor_id in the body
 
   let competitorId: string | null = null;
+  let isCronCall = false;
 
   try {
     const body = await request.json();
     competitorId = body.competitor_id || null;
   } catch {
-    // No body — scrape all (cron job)
+    // No body — this is a cron job call
+    isCronCall = true;
   }
+
+  // If it's a cron call (no body), verify the CRON_SECRET
+  if (isCronCall) {
+    const authHeader = request.headers.get("authorization");
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  }
+
+  const supabase = await createClient();
 
   try {
     let competitors;
