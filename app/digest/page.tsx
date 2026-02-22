@@ -413,24 +413,12 @@ export default function DigestPage() {
                         <span className="px-2 py-0.5 rounded text-[11px]" style={{ color: "#00FFFF", border: "1px solid #00FFFF", ...IBM }}>
                           {signalConfig(resolvedSignalType).label}
                         </span>
-                        {insight.verification_note && (
-                          <span className="px-2 py-0.5 rounded text-[11px]" style={{ color: "#00FFFF", border: "1px solid #00FFFF", ...IBM }}>EVIDENCE FLAG</span>
-                        )}
-                        {insight.consistency_note && (
-                          <span className="px-2 py-0.5 rounded text-[11px]" style={{ color: "#FF00FF", border: "1px solid #FF00FF", ...IBM }}>CONTRADICTION</span>
-                        )}
                       </div>
                       <span className="px-2 py-0.5 rounded text-[11px]" style={{ color: uColor, border: `1px solid ${uColor}`, ...SM }}>{urgencyKey}</span>
                     </div>
                     <div className="text-[13px] space-y-2" style={IBM}>
                       <p><span className="text-white font-bold">WHAT HAPPENED: </span><span className="text-[#888888]">{insight.what_happened ?? "—"}</span></p>
                       <p><span className="text-[#00FFFF] font-bold">WHY IT MATTERS: </span><span className="text-[#888888]">{insight.why_it_matters ?? "—"}</span></p>
-                      {insight.verification_note && (
-                        <p><span className="text-[#00FFFF] font-bold">EVIDENCE CHECK: </span><span className="text-[#888888]">{insight.verification_note}</span></p>
-                      )}
-                      {insight.consistency_note && (
-                        <p><span className="text-[#FF00FF] font-bold">CONSISTENCY CHECK: </span><span className="text-[#888888]">{insight.consistency_note}</span></p>
-                      )}
                       <div className="flex items-start gap-2">
                         <Checkbox checked={checkedActions[`${i}`] || false} onCheckedChange={(v) => setCheckedActions((p) => ({ ...p, [`${i}`]: !!v }))} className="mt-1 border-[#00FF41] data-[state=checked]:bg-[#00FF41]" />
                         <p><span className="text-[#00FF41] font-bold">ACTION: </span><span className="text-[#888888]">{insight.recommended_action ?? "—"}</span></p>

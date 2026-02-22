@@ -1,6 +1,7 @@
 "use client";
 
 import { NavLink } from "@/components/NavLink";
+import { createClient } from "@/lib/supabase/client";
 import {
   LayoutDashboard,
   Users,
@@ -8,6 +9,7 @@ import {
   FileText,
   Settings,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -18,6 +20,23 @@ const navItems = [
 ];
 
 export default function DashboardSidebar() {
+  const [startupName, setStartupName] = useState<string>("");
+
+  useEffect(() => {
+    const load = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("user_products")
+        .select("name")
+        .eq("user_id", user.id)
+        .limit(1)
+        .maybeSingle();
+      if (data?.name) setStartupName(data.name);
+    };
+    void load();
+  }, []);
   return (
     <aside
       className="fixed left-0 top-0 h-screen flex flex-col z-40 sidebar-glass"
@@ -63,13 +82,13 @@ export default function DashboardSidebar() {
             className="w-8 h-8 rounded-full border-2 border-[#00FF41] flex items-center justify-center"
             style={{ fontFamily: "var(--font-space-mono)" }}
           >
-            <span className="text-[#00FF41] text-[10px]">U</span>
+            <span className="text-[#00FF41] text-[10px]">{startupName ? startupName[0].toUpperCase() : "U"}</span>
           </div>
           <span
             className="text-white/50 text-[12px]"
             style={{ fontFamily: "var(--font-ibm-plex-mono)" }}
           >
-            user@competitorpulse.io
+            {startupName || "—"}
           </span>
         </div>
       </div>
