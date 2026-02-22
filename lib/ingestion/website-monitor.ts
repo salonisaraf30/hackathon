@@ -3,7 +3,7 @@ import crypto from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/server";
-import { indexSignalInNia } from "@/lib/intelligence/nia-client";
+// import { indexSignalInNia } from "@/lib/intelligence/nia-client";
 import { extractSignalsFromDiff } from "./signal-extractor";
 
 export async function monitorWebsite(
@@ -105,40 +105,40 @@ export async function monitorWebsite(
 		return [];
 	}
 
-	for (const insertedSignal of insertedSignals ?? []) {
-		try {
-			const payload = {
-				id: insertedSignal.id,
-				competitor_id: insertedSignal.competitor_id ?? competitorId,
-				signal_type: insertedSignal.signal_type,
-				title: insertedSignal.title,
-				summary: insertedSignal.summary ?? "",
-				detected_at: insertedSignal.detected_at ?? new Date().toISOString(),
-				importance_score: insertedSignal.importance_score ?? 5,
-			};
+	// for (const insertedSignal of insertedSignals ?? []) {
+	// 	try {
+	// 		const payload = {
+	// 			id: insertedSignal.id,
+	// 			competitor_id: insertedSignal.competitor_id ?? competitorId,
+	// 			signal_type: insertedSignal.signal_type,
+	// 			title: insertedSignal.title,
+	// 			summary: insertedSignal.summary ?? "",
+	// 			detected_at: insertedSignal.detected_at ?? new Date().toISOString(),
+	// 			importance_score: insertedSignal.importance_score ?? 5,
+	// 		};
 
-			await indexSignalInNia({
-				id: payload.id,
-				competitor_id: payload.competitor_id,
-				signal_type: payload.signal_type,
-				title: payload.title,
-				summary: payload.summary,
-				detected_at: payload.detected_at,
-				importance_score: payload.importance_score,
-			});
+	// 		await indexSignalInNia({
+	// 			id: payload.id,
+	// 			competitor_id: payload.competitor_id,
+	// 			signal_type: payload.signal_type,
+	// 			title: payload.title,
+	// 			summary: payload.summary,
+	// 			detected_at: payload.detected_at,
+	// 			importance_score: payload.importance_score,
+	// 		});
 
-			const { error: markIndexedError } = await supabase
-				.from("signals")
-				.update({ nia_indexed: true })
-				.eq("id", insertedSignal.id);
+	// 		const { error: markIndexedError } = await supabase
+	// 			.from("signals")
+	// 			.update({ nia_indexed: true })
+	// 			.eq("id", insertedSignal.id);
 
-			if (markIndexedError) {
-				console.error("Failed to mark signal as Nia indexed:", markIndexedError);
-			}
-		} catch (error) {
-			console.error("Failed to index in Nia:", error);
-		}
-	}
+	// 		if (markIndexedError) {
+	// 			console.error("Failed to mark signal as Nia indexed:", markIndexedError);
+	// 		}
+	// 	} catch (error) {
+	// 		console.error("Failed to index in Nia:", error);
+	// 	}
+	// }
 
 	return insertedSignals ?? [];
 }

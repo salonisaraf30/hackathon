@@ -43,12 +43,41 @@ type DigestInsight = {
   why_it_matters?: string;
   recommended_action?: string;
   urgency?: string;
+  quality_score?: number;
+  signal_id?: string;
+};
+
+type DigestScenario = {
+  competitor_name?: string;
+  prediction?: string;
+  confidence?: number;
+  timeframe?: string;
+  impact_if_true?: string;
+  preemptive_action?: string;
 };
 
 type DigestStrategy = {
   executive_summary?: string;
   insights?: DigestInsight[];
   strategic_outlook?: string;
+  scenarios?: {
+    market_direction?: string;
+    scenarios?: DigestScenario[];
+    wildcards?: string[];
+  };
+  pipeline_trace?: {
+    token_usage?: Record<string, number>;
+    classification_summary?: Array<{ signal_id?: string }>;
+    red_team_summary?: Array<{ signal_id?: string; verdict?: string }>;
+  };
+  pipeline_meta?: {
+    agents?: string[];
+    quality_score?: number;
+    accepted_insights?: number;
+    rejected_insights?: number;
+    predictions_generated?: number;
+    selected_signal_ids?: string[];
+  };
 };
 
 const urgencyColors: Record<string, string> = {
@@ -68,9 +97,10 @@ function formatTimeAgo(value: string | null): string {
 }
 
 function signalConfig(type: string) {
+  const normalized = type.trim();
   return signalTypeConfig[type] ?? {
     color: "hsl(180,100%,50%)",
-    label: type.toUpperCase(),
+    label: normalized ? normalized.toUpperCase() : "SIGNAL",
     dotClass: "bg-neon-cyan",
     borderClass: "border-neon-cyan",
   };
@@ -78,7 +108,67 @@ function signalConfig(type: string) {
 
 function parseStrategy(value: unknown): DigestStrategy {
   if (!value || typeof value !== "object") return {};
-  return value as DigestStrategy;
+  const raw = value as Record<string, unknown>;
+
+  const rawInsights = Array.isArray(raw.insights) ? raw.insights as Array<Record<string, unknown>> : [];
+  const normalizedInsights: DigestInsight[] = rawInsights.map((item) => ({
+    signal_id: typeof item.signal_id === "string" ? item.signal_id : undefined,
+    competitor: (typeof item.competitor === "string" ? item.competitor : undefined)
+      ?? (typeof item.competitor_name === "string" ? item.competitor_name : undefined),
+    signal_type: typeof item.signal_type === "string" ? item.signal_type : undefined,
+    what_happened: typeof item.what_happened === "string" ? item.what_happened : undefined,
+    why_it_matters: (typeof item.why_it_matters === "string" ? item.why_it_matters : undefined)
+      ?? (typeof item.strategic_implication === "string" ? item.strategic_implication : undefined)
+      ?? (typeof item.impact_on_user === "string" ? item.impact_on_user : undefined),
+    recommended_action: typeof item.recommended_action === "string" ? item.recommended_action : undefined,
+    urgency: typeof item.urgency === "string" ? item.urgency : undefined,
+    quality_score: typeof item.quality_score === "number" ? item.quality_score : undefined,
+  }));
+
+  const scenarios = (raw.scenarios && typeof raw.scenarios === "object")
+    ? raw.scenarios as DigestStrategy["scenarios"]
+    : undefined;
+
+  const pipelineTrace = (raw.pipeline_trace && typeof raw.pipeline_trace === "object")
+    ? raw.pipeline_trace as DigestStrategy["pipeline_trace"]
+    : undefined;
+
+  const existingPipelineMeta = (raw.pipeline_meta && typeof raw.pipeline_meta === "object")
+    ? raw.pipeline_meta as DigestStrategy["pipeline_meta"]
+    : undefined;
+
+  const acceptedInsights = normalizedInsights.length;
+  const rejectedInsights = (pipelineTrace?.red_team_summary ?? []).filter((r) => r?.verdict && r.verdict !== "upheld").length;
+  const predictionsGenerated = scenarios?.scenarios?.length ?? 0;
+  const selectedSignalIds = (
+    pipelineTrace?.classification_summary
+      ?.map((s) => s.signal_id)
+      .filter((id): id is string => typeof id === "string")
+  ) ?? [];
+  const avgQuality = normalizedInsights.filter((i) => typeof i.quality_score === "number");
+  const qualityScore = avgQuality.length > 0
+    ? avgQuality.reduce((sum, i) => sum + (i.quality_score ?? 0), 0) / (avgQuality.length * 10)
+    : undefined;
+
+  const derivedPipelineMeta: DigestStrategy["pipeline_meta"] = {
+    agents: ["signal-classifier", "competitive-strategist", "red-team", "scenario-predictor", "quality-judge"],
+    quality_score: qualityScore,
+    accepted_insights: acceptedInsights,
+    rejected_insights: rejectedInsights,
+    predictions_generated: predictionsGenerated,
+    selected_signal_ids: selectedSignalIds,
+  };
+
+  return {
+    executive_summary: typeof raw.executive_summary === "string" ? raw.executive_summary : undefined,
+    insights: normalizedInsights,
+    scenarios,
+    strategic_outlook:
+      (typeof raw.strategic_outlook === "string" ? raw.strategic_outlook : undefined)
+      ?? (typeof scenarios?.market_direction === "string" ? scenarios.market_direction : undefined),
+    pipeline_trace: pipelineTrace,
+    pipeline_meta: existingPipelineMeta ?? derivedPipelineMeta,
+  };
 }
 
 export default function DigestPage() {
@@ -127,12 +217,39 @@ export default function DigestPage() {
 
   const digestSignals = useMemo(() => {
     if (!active) return [];
+
+    const linkedSignals = (active.digest_signals ?? [])
+      .map((item) => {
+        const row = item.signals;
+        if (!row?.id) return null;
+        return {
+          id: row.id,
+          signal_type: row.signal_type ?? "",
+          title: row.title ?? "Untitled signal",
+          detected_at: null,
+          competitors: row.competitors ?? null,
+        } as ApiSignal;
+      })
+      .filter((signal): signal is ApiSignal => Boolean(signal));
+
+    if (linkedSignals.length > 0) {
+      return linkedSignals;
+    }
+
     const linkIds = (active.digest_signals ?? []).map((item) => item.signal_id);
     if (linkIds.length > 0) {
       return signals.filter((signal) => linkIds.includes(signal.id));
     }
+
     return signals.slice(0, 10);
   }, [active, signals]);
+
+  const signalTypeById = useMemo(() => {
+    return digestSignals.reduce<Record<string, string>>((acc, signal) => {
+      acc[signal.id] = signal.signal_type;
+      return acc;
+    }, {});
+  }, [digestSignals]);
 
   const threatPercent = useMemo(() => {
     if (insights.length === 0) return 35;
@@ -239,12 +356,13 @@ export default function DigestPage() {
                 <h3 className="font-pixel text-[8px] text-neon-magenta">KEY INSIGHTS</h3>
                 {insights.map((insight, i) => {
                   const urgencyKey = (insight.urgency ?? "LOW").toUpperCase();
+                  const resolvedSignalType = insight.signal_type ?? (insight.signal_id ? signalTypeById[insight.signal_id] : "") ?? "";
                   return (
                     <div key={i} className="bg-background border border-neon-magenta p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="font-pixel text-[8px] text-foreground">{insight.competitor ?? "COMPETITOR"}</span>
-                          <Badge variant="outline" className="font-terminal text-[9px] text-neon-cyan border-neon-cyan rounded-none">{signalConfig(insight.signal_type ?? "").label}</Badge>
+                          <Badge variant="outline" className="font-terminal text-[9px] text-neon-cyan border-neon-cyan rounded-none">{signalConfig(resolvedSignalType).label}</Badge>
                         </div>
                         <Badge variant="outline" className={`font-pixel text-[6px] rounded-none ${urgencyColors[urgencyKey] ?? urgencyColors.LOW}`}>{urgencyKey}</Badge>
                       </div>
@@ -266,6 +384,19 @@ export default function DigestPage() {
               <div>
                 <h3 className="font-pixel text-[8px] text-foreground mb-3">STRATEGIC OUTLOOK</h3>
                 <p className="font-terminal text-sm text-muted-foreground">{strategy.strategic_outlook}</p>
+              </div>
+            )}
+
+            {strategy.scenarios?.scenarios && strategy.scenarios.scenarios.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="font-pixel text-[8px] text-neon-cyan">FORWARD SCENARIOS</h3>
+                {strategy.scenarios.scenarios.slice(0, 3).map((scenario, index) => (
+                  <div key={index} className="bg-background border border-neon-cyan/50 p-3 font-terminal text-xs space-y-1">
+                    <p><span className="text-foreground font-bold">{scenario.competitor_name ?? "Competitor"}:</span> <span className="text-muted-foreground">{scenario.prediction ?? "—"}</span></p>
+                    <p><span className="text-neon-cyan font-bold">TIMEFRAME: </span><span className="text-muted-foreground">{scenario.timeframe ?? "—"}</span></p>
+                    <p><span className="text-neon-gold font-bold">PREEMPTIVE ACTION: </span><span className="text-muted-foreground">{scenario.preemptive_action ?? "—"}</span></p>
+                  </div>
+                ))}
               </div>
             )}
 
