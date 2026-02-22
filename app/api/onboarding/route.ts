@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const positioning = [stage, goal].filter(Boolean).join(" | ");
+  const positioning = [description?.trim(), stage, goal].filter(Boolean).join(" | ");
   const targetMarket = audiences.length > 0 ? audiences.join(", ") : null;
   const normalizedAudiences = audiences
     .map((item) => item.trim())

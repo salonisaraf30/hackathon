@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 const STAGES = [
-  "💡 Just an idea",
-  "🛠️ Building the MVP",
-  "🚀 Live, pre-revenue",
-  "💰 Making money",
+  "Just an idea",
+  "Building the MVP",
+  "Live, pre-revenue",
+  "Making money",
 ];
 
 const AUDIENCES = [
@@ -21,11 +21,14 @@ const AUDIENCES = [
 ];
 
 const GOALS = [
-  "📣 Build brand awareness",
-  "🧲 Generate leads",
-  "💼 Attract investors",
-  "🔍 Understand the market",
+  "Build brand awareness",
+  "Generate leads",
+  "Attract investors",
+  "Understand the market",
 ];
+
+const SM = { fontFamily: "var(--font-space-mono)" };
+const IBM = { fontFamily: "var(--font-ibm-plex-mono)" };
 
 type OnboardingCompetitor = {
   name: string;
@@ -167,78 +170,70 @@ export default function OnboardingPage() {
   };
 
   const totalSteps = 6;
-  const xpPercent = ((step + 1) / totalSteps) * 100;
+  const progressPercent = ((step + 1) / totalSteps) * 100;
 
   return (
-    <div className="scanlines min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#050505" }}>
+      {/* Progress bar */}
       <div className="w-full p-4">
         <div className="max-w-lg mx-auto">
           <div className="flex justify-between mb-1">
-            <span className="font-pixel text-[8px] text-muted-foreground">XP</span>
-            <span className="font-pixel text-[8px] text-primary">{step + 1}/{totalSteps}</span>
+            <span className="text-[11px] text-[#888888]" style={IBM}>PROGRESS</span>
+            <span className="text-[11px] text-[#00FF41]" style={SM}>{step + 1}/{totalSteps}</span>
           </div>
-          <div className="w-full h-3 border border-primary">
-            <div
-              className="h-full bg-primary transition-all duration-500"
-              style={{ width: `${xpPercent}%` }}
-            />
+          <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+            <div className="h-full bg-[#00FF41] transition-all duration-500 rounded-full" style={{ width: `${progressPercent}%` }} />
           </div>
         </div>
       </div>
 
       <div className="flex-1 flex items-center justify-center px-4 py-8">
+        {/* Step 1: Your startup */}
         {step === 0 && (
           <div className="flex flex-col items-center gap-8 w-full max-w-lg">
-            <h2 className="font-pixel text-sm sm:text-base text-primary text-glow-green">
-              LEVEL 1: YOUR STARTUP
-            </h2>
+            <h2 className="text-xl text-[#00FF41]" style={SM}>STEP 1: YOUR STARTUP</h2>
             <div className="w-full">
-              <label className="font-pixel text-[10px] text-muted-foreground block mb-3">
-                What&apos;s your startup called?
-              </label>
+              <label className="text-[12px] text-[#888888] block mb-2" style={IBM}>What&apos;s your startup called?</label>
               <input
-                className="terminal-input w-full font-pixel text-xs sm:text-sm py-2 px-1"
+                className="terminal-input w-full px-3 py-2.5 rounded text-[13px]"
+                style={IBM}
                 value={startupName}
-                onChange={(event) => setStartupName(event.target.value)}
+                onChange={(e) => setStartupName(e.target.value)}
                 autoFocus
               />
             </div>
             <div className="w-full">
-              <label className="font-pixel text-[10px] text-muted-foreground block mb-3">
-                Describe it in one line:
-              </label>
+              <label className="text-[12px] text-[#888888] block mb-2" style={IBM}>Describe it in one line:</label>
               <input
-                className="terminal-input w-full font-pixel text-[10px] sm:text-xs py-2 px-1"
+                className="terminal-input w-full px-3 py-2.5 rounded text-[13px]"
+                style={IBM}
                 value={description}
-                onChange={(event) => setDescription(event.target.value.slice(0, 100))}
+                onChange={(e) => setDescription(e.target.value.slice(0, 100))}
                 maxLength={100}
               />
-              <span className="font-terminal text-sm text-muted-foreground mt-1 block text-right">
-                {description.length}/100
-              </span>
+              <span className="text-[11px] text-[#888888] mt-1 block text-right" style={IBM}>{description.length}/100</span>
             </div>
           </div>
         )}
 
+        {/* Step 2: Stage */}
         {step === 1 && (
           <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
-            <h2 className="font-pixel text-sm sm:text-base text-primary text-glow-green">
-              LEVEL 2: YOUR STAGE
-            </h2>
-            <p className="font-pixel text-[10px] text-muted-foreground">
-              Where are you in the game?
-            </p>
+            <h2 className="text-xl text-[#00FF41]" style={SM}>STEP 2: YOUR STAGE</h2>
+            <p className="text-[13px] text-[#888888]" style={IBM}>Where are you in the game?</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
               {STAGES.map((item, index) => (
                 <button
                   key={item}
                   type="button"
                   onClick={() => setStage(index)}
-                  className={`font-pixel text-[10px] sm:text-xs border-2 p-6 text-left transition-all duration-200 cursor-pointer ${
-                    stage === index
-                      ? "border-primary text-primary glow-green"
-                      : "border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground"
-                  }`}
+                  className="p-6 rounded-lg text-left text-[13px] transition-all cursor-pointer"
+                  style={{
+                    border: stage === index ? "2px solid #00FF41" : "2px solid rgba(255,255,255,0.1)",
+                    color: stage === index ? "#00FF41" : "#888888",
+                    backgroundColor: stage === index ? "rgba(0,255,65,0.05)" : "transparent",
+                    ...SM,
+                  }}
                 >
                   {item}
                 </button>
@@ -247,25 +242,24 @@ export default function OnboardingPage() {
           </div>
         )}
 
+        {/* Step 3: Audience */}
         {step === 2 && (
           <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
-            <h2 className="font-pixel text-sm sm:text-base text-primary text-glow-green">
-              LEVEL 3: YOUR PLAYERS
-            </h2>
-            <p className="font-pixel text-[10px] text-muted-foreground">
-              Who are you building for?
-            </p>
+            <h2 className="text-xl text-[#00FF41]" style={SM}>STEP 3: YOUR AUDIENCE</h2>
+            <p className="text-[13px] text-[#888888]" style={IBM}>Who are you building for?</p>
             <div className="flex flex-wrap justify-center gap-3">
               {AUDIENCES.map((item) => (
                 <button
                   key={item}
                   type="button"
                   onClick={() => toggleAudience(item)}
-                  className={`font-pixel text-[10px] border-2 px-4 py-2 transition-all duration-200 cursor-pointer ${
-                    audiences.includes(item)
-                      ? "border-secondary text-secondary glow-magenta"
-                      : "border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground"
-                  }`}
+                  className="px-4 py-2 rounded text-[13px] transition-all cursor-pointer"
+                  style={{
+                    border: audiences.includes(item) ? "2px solid #FF00FF" : "2px solid rgba(255,255,255,0.1)",
+                    color: audiences.includes(item) ? "#FF00FF" : "#888888",
+                    backgroundColor: audiences.includes(item) ? "rgba(255,0,255,0.05)" : "transparent",
+                    ...SM,
+                  }}
                 >
                   {item}
                 </button>
@@ -274,72 +268,57 @@ export default function OnboardingPage() {
           </div>
         )}
 
+        {/* Step 4: Competitors */}
         {step === 3 && (
           <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
-            <h2 className="font-pixel text-sm sm:text-base text-primary text-glow-green">
-              LEVEL 4: ADD COMPETITORS
-            </h2>
-            <p className="font-pixel text-[10px] text-muted-foreground">
-              Add competitor names + URLs so ingestion APIs can scrape them.
-            </p>
-
+            <h2 className="text-xl text-[#00FF41]" style={SM}>STEP 4: ADD COMPETITORS</h2>
+            <p className="text-[13px] text-[#888888]" style={IBM}>Add competitor names + URLs so ingestion APIs can scrape them.</p>
             <div className="w-full max-w-xl space-y-3">
               <div>
-                <label className="font-pixel text-[10px] text-muted-foreground block mb-2">
-                  Competitor Name
-                </label>
+                <label className="text-[12px] text-[#888888] block mb-2" style={IBM}>Competitor Name</label>
                 <input
-                  className="terminal-input w-full font-pixel text-[10px] py-2 px-1"
+                  className="terminal-input w-full px-3 py-2.5 rounded text-[13px]"
+                  style={IBM}
                   value={competitorNameInput}
-                  onChange={(event) => setCompetitorNameInput(event.target.value)}
+                  onChange={(e) => setCompetitorNameInput(e.target.value)}
                   placeholder="e.g. Notion"
                 />
               </div>
-
               <div>
-                <label className="font-pixel text-[10px] text-muted-foreground block mb-2">
-                  Competitor URL
-                </label>
+                <label className="text-[12px] text-[#888888] block mb-2" style={IBM}>Competitor URL</label>
                 <input
-                  className="terminal-input w-full font-pixel text-[10px] py-2 px-1"
+                  className="terminal-input w-full px-3 py-2.5 rounded text-[13px]"
+                  style={IBM}
                   value={competitorUrlInput}
-                  onChange={(event) => setCompetitorUrlInput(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      addCompetitor();
-                    }
-                  }}
+                  onChange={(e) => setCompetitorUrlInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCompetitor(); } }}
                   placeholder="https://competitor.com"
                 />
               </div>
-
               <button
                 type="button"
                 onClick={addCompetitor}
-                className="font-pixel text-[9px] border border-secondary text-secondary px-4 py-2 glow-magenta"
+                className="px-4 py-2 rounded text-[12px] transition-colors"
+                style={{ border: "1px solid #FF00FF", color: "#FF00FF", ...SM }}
               >
                 + ADD COMPETITOR
               </button>
-
               <div className="space-y-2 pt-2">
                 {competitors.map((item) => (
                   <div
                     key={`${item.name}:${item.url}`}
-                    className="border border-primary px-3 py-2 flex items-center justify-between"
+                    className="px-3 py-2 rounded-lg flex items-center justify-between"
+                    style={{ border: "1px solid #00FF41", backgroundColor: "rgba(0,255,65,0.05)" }}
                   >
                     <div>
-                      <p className="font-pixel text-[9px] text-primary">{item.name}</p>
-                      <p className="font-terminal text-xs text-muted-foreground">{item.url}</p>
+                      <p className="text-[12px] text-[#00FF41]" style={SM}>{item.name}</p>
+                      <p className="text-[11px] text-[#888888]" style={IBM}>{item.url}</p>
                     </div>
                     <button
                       type="button"
-                      className="font-pixel text-[8px] text-primary"
-                      onClick={() =>
-                        setCompetitors((prev) =>
-                          prev.filter((value) => value.name !== item.name)
-                        )
-                      }
+                      className="text-[11px] text-red-400 hover:text-red-300"
+                      style={SM}
+                      onClick={() => setCompetitors((prev) => prev.filter((v) => v.name !== item.name))}
                     >
                       REMOVE
                     </button>
@@ -350,25 +329,24 @@ export default function OnboardingPage() {
           </div>
         )}
 
+        {/* Step 5: Goal */}
         {step === 4 && (
           <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
-            <h2 className="font-pixel text-sm sm:text-base text-primary text-glow-green">
-              LEVEL 5: YOUR MISSION
-            </h2>
-            <p className="font-pixel text-[10px] text-muted-foreground">
-              What&apos;s your main goal right now?
-            </p>
+            <h2 className="text-xl text-[#00FF41]" style={SM}>STEP 5: YOUR MISSION</h2>
+            <p className="text-[13px] text-[#888888]" style={IBM}>What&apos;s your main goal right now?</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
               {GOALS.map((item, index) => (
                 <button
                   key={item}
                   type="button"
                   onClick={() => setGoal(index)}
-                  className={`font-pixel text-[10px] sm:text-xs border-2 p-6 text-left transition-all duration-200 cursor-pointer ${
-                    goal === index
-                      ? "border-primary text-primary glow-green"
-                      : "border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground"
-                  }`}
+                  className="p-6 rounded-lg text-left text-[13px] transition-all cursor-pointer"
+                  style={{
+                    border: goal === index ? "2px solid #00FF41" : "2px solid rgba(255,255,255,0.1)",
+                    color: goal === index ? "#00FF41" : "#888888",
+                    backgroundColor: goal === index ? "rgba(0,255,65,0.05)" : "transparent",
+                    ...SM,
+                  }}
                 >
                   {item}
                 </button>
@@ -377,18 +355,19 @@ export default function OnboardingPage() {
           </div>
         )}
 
+        {/* Step 6: Final */}
         {step === 5 && (
           <div className="flex flex-col items-center gap-8">
-            <h2 className="font-pixel text-xl sm:text-3xl text-primary text-glow-green animate-flash">
-              PLAYER READY!
-            </h2>
+            <h2 className="text-3xl text-[#00FF41] animate-pulse" style={SM}>READY TO LAUNCH</h2>
+            <p className="text-[13px] text-[#888888]" style={IBM}>Your competitive intelligence engine is about to start.</p>
             <button
               type="button"
               onClick={() => void submitOnboarding()}
               disabled={loading}
-              className="font-pixel text-sm border-2 border-primary text-primary px-8 py-4 glow-green hover:bg-primary hover:text-primary-foreground transition-all duration-200 cursor-pointer disabled:opacity-50"
+              className="px-8 py-4 rounded text-[16px] transition-all disabled:opacity-50"
+              style={{ border: "2px solid #00FF41", color: "#00FF41", ...SM }}
             >
-              {loading ? "SAVING..." : "ENTER THE ARENA →"}
+              {loading ? "INITIALIZING..." : "ENTER THE ARENA →"}
             </button>
           </div>
         )}
@@ -396,7 +375,7 @@ export default function OnboardingPage() {
 
       {error && (
         <div className="pb-2 text-center">
-          <p className="font-pixel text-[10px] text-red-500">{error}</p>
+          <p className="text-[12px] text-red-400" style={IBM}>{error}</p>
         </div>
       )}
 
@@ -405,21 +384,23 @@ export default function OnboardingPage() {
           {step > 0 && (
             <button
               type="button"
-              onClick={() => setStep((value) => value - 1)}
-              className="font-pixel text-[10px] sm:text-xs border border-muted-foreground/30 text-muted-foreground px-6 py-3 hover:border-foreground hover:text-foreground transition-all cursor-pointer"
+              onClick={() => setStep((v) => v - 1)}
+              className="px-6 py-3 rounded text-[13px] transition-all cursor-pointer"
+              style={{ border: "1px solid rgba(255,255,255,0.2)", color: "#888888", ...SM }}
             >
               ← BACK
             </button>
           )}
           <button
             type="button"
-            onClick={() => setStep((value) => value + 1)}
+            onClick={() => setStep((v) => v + 1)}
             disabled={!canNext()}
-            className={`font-pixel text-[10px] sm:text-xs border-2 px-6 py-3 transition-all cursor-pointer ${
-              canNext()
-                ? "border-primary text-primary glow-green hover:bg-primary hover:text-primary-foreground"
-                : "border-muted-foreground/20 text-muted-foreground/40 cursor-not-allowed"
-            }`}
+            className="px-6 py-3 rounded text-[13px] transition-all cursor-pointer disabled:opacity-30"
+            style={{
+              border: canNext() ? "2px solid #00FF41" : "2px solid rgba(255,255,255,0.1)",
+              color: canNext() ? "#00FF41" : "#888888",
+              ...SM,
+            }}
           >
             NEXT →
           </button>

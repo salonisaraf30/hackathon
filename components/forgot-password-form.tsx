@@ -2,18 +2,11 @@
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useState } from "react";
+
+const SM = { fontFamily: "var(--font-space-mono)" };
+const IBM = { fontFamily: "var(--font-ibm-plex-mono)" };
 
 export function ForgotPasswordForm({
   className,
@@ -29,9 +22,7 @@ export function ForgotPasswordForm({
     const supabase = createClient();
     setIsLoading(true);
     setError(null);
-
     try {
-      // The url which will be included in the email. This URL needs to be configured in your redirect URLs in the Supabase dashboard at https://supabase.com/dashboard/project/_/auth/url-configuration
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth/update-password`,
       });
@@ -47,58 +38,46 @@ export function ForgotPasswordForm({
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       {success ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Check Your Email</CardTitle>
-            <CardDescription>Password reset instructions sent</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              If you registered using your email and password, you will receive
-              a password reset email.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="rounded-lg p-8" style={{ backgroundColor: "#0D0D0D", border: "1px solid #00FF41" }}>
+          <h1 className="text-2xl text-[#00FF41] mb-2" style={SM}>CHECK YOUR EMAIL</h1>
+          <p className="text-[13px] text-[#888888]" style={IBM}>
+            If you registered using your email and password, you will receive a password reset email.
+          </p>
+        </div>
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Reset Your Password</CardTitle>
-            <CardDescription>
-              Type in your email and we&apos;ll send you a link to reset your
-              password
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleForgotPassword}>
-              <div className="flex flex-col gap-6">
-                <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="m@example.com"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Sending..." : "Send reset email"}
-                </Button>
-              </div>
-              <div className="mt-4 text-center text-sm">
-                Already have an account?{" "}
-                <Link
-                  href="/auth/login"
-                  className="underline underline-offset-4"
-                >
-                  Login
-                </Link>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+        <div className="rounded-lg p-8" style={{ backgroundColor: "#0D0D0D", border: "1px solid #00FFFF" }}>
+          <div className="mb-6">
+            <h1 className="text-2xl text-[#00FFFF] mb-1" style={SM}>RESET PASSWORD</h1>
+            <p className="text-[13px] text-[#888888]" style={IBM}>Type in your email and we&apos;ll send you a reset link</p>
+          </div>
+          <form onSubmit={handleForgotPassword} className="space-y-5">
+            <div>
+              <label className="text-[12px] text-[#888888] block mb-1" style={IBM}>Email</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="operator@competitorpulse.io"
+                className="terminal-input w-full px-3 py-2.5 rounded text-[13px]"
+                style={IBM}
+              />
+            </div>
+            {error && <p className="text-[12px] text-red-400" style={IBM}>{error}</p>}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-2.5 rounded text-[13px] transition-colors disabled:opacity-50"
+              style={{ backgroundColor: "#00FFFF", color: "#000", ...SM }}
+            >
+              {isLoading ? "SENDING..." : "SEND RESET EMAIL →"}
+            </button>
+          </form>
+          <p className="text-center text-[12px] text-[#888888] mt-5" style={IBM}>
+            Already have an account?{" "}
+            <Link href="/auth/login" className="text-[#00FF41] hover:underline" style={SM}>LOGIN</Link>
+          </p>
+        </div>
       )}
     </div>
   );
