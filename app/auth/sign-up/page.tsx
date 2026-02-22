@@ -1,11 +1,12 @@
-import { SignUpForm } from "@/components/sign-up-form";
+"use client";
 
-export default function Page() {
+import { useRouter } from "next/navigation";
+
+export default function SignUpPage() {
+  const router = useRouter();
   return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm">
-        <SignUpForm />
-      </div>
+    <div className="min-h-screen flex items-center justify-center">
+      <button onClick={() => router.push("/auth")} className="text-[#00FF41]">Go to Auth</button>
     </div>
   );
 }

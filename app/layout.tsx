@@ -1,23 +1,41 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
-import { ThemeProvider } from "next-themes";
+import DashboardShell from "@/components/dashboard/DashboardShell";
+import {
+  Press_Start_2P,
+  VT323,
+  Space_Mono,
+  IBM_Plex_Mono,
+} from "next/font/google";
 import "./globals.css";
 
-const defaultUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
+const pressStart2P = Press_Start_2P({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-press-start",
+});
+
+const vt323 = VT323({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-vt323",
+});
+
+const spaceMono = Space_Mono({
+  weight: ["400", "700"],
+  subsets: ["latin"],
+  variable: "--font-space-mono",
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  weight: ["400", "500", "600"],
+  subsets: ["latin"],
+  variable: "--font-ibm-plex-mono",
+});
 
 export const metadata: Metadata = {
-  metadataBase: new URL(defaultUrl),
-  title: "Next.js and Supabase Starter Kit",
-  description: "The fastest way to build apps with Next.js and Supabase",
+  title: "CompetitorPulse — AI Competitive Intelligence",
+  description: "Know every move your competitors make.",
 };
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  display: "swap",
-  subsets: ["latin"],
-});
 
 export default function RootLayout({
   children,
@@ -25,16 +43,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning className={`${geistSans.className} antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
+    <html
+      lang="en"
+      className={`${pressStart2P.variable} ${vt323.variable} ${spaceMono.variable} ${ibmPlexMono.variable}`}
+    >
+      <body className="antialiased bg-black text-white min-h-screen">
+        <DashboardShell>{children}</DashboardShell>
       </body>
     </html>
   );

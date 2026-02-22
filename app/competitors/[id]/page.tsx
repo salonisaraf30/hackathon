@@ -1,243 +1,150 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import {
-  ResponsiveContainer,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  Radar,
-} from "recharts";
+import { useState } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend, ResponsiveContainer } from "recharts";
+import { COMPETITORS, SIGNALS, RADAR_DATA, formatTimeAgo, TYPE_COLORS } from "@/lib/dashboard-data";
 
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { signalTypeConfig, threatColors } from "@/data/mock-data";
-
-type ApiCompetitor = {
-  id: string;
-  name: string;
-  website_url: string | null;
-  twitter_handle: string | null;
-  created_at: string | null;
-};
-
-type ApiSignal = {
-  id: string;
-  competitor_id: string | null;
-  signal_type: string;
-  title: string;
-  summary: string | null;
-  source: string;
-  importance_score: number | null;
-  detected_at: string | null;
-};
-
-const tabs = ["SIGNALS", "RADAR", "SETTINGS"];
-const radarAxes = ["feature_update", "pricing_change", "social_post", "funding", "hiring", "product_launch"];
-
-function formatTimeAgo(value: string | null): string {
-  if (!value) return "—";
-  const time = new Date(value).getTime();
-  if (Number.isNaN(time)) return "—";
-  const hours = Math.floor((Date.now() - time) / (1000 * 60 * 60));
-  if (hours < 1) return "NOW";
-  if (hours < 24) return `${hours}H AGO`;
-  return `${Math.floor(hours / 24)}D AGO`;
-}
-
-function configForType(type: string) {
-  return signalTypeConfig[type] ?? {
-    color: "hsl(180,100%,50%)",
-    label: type.toUpperCase(),
-    dotClass: "bg-neon-cyan",
-    borderClass: "border-neon-cyan",
-  };
-}
+const RADAR_VS = [
+  { subject: "Pricing", Notion: 85, "YOUR PRODUCT": 45, fullMark: 100 },
+  { subject: "Product", Notion: 90, "YOUR PRODUCT": 60, fullMark: 100 },
+  { subject: "Marketing", Notion: 88, "YOUR PRODUCT": 40, fullMark: 100 },
+  { subject: "Hiring", Notion: 75, "YOUR PRODUCT": 35, fullMark: 100 },
+  { subject: "Funding", Notion: 70, "YOUR PRODUCT": 30, fullMark: 100 },
+];
 
 export default function CompetitorDetailPage() {
-  const params = useParams<{ id: string }>();
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState("SIGNALS");
-  const [signalTypeFilter, setSignalTypeFilter] = useState("ALL");
-  const [competitor, setCompetitor] = useState<ApiCompetitor | null>(null);
-  const [signals, setSignals] = useState<ApiSignal[]>([]);
+  const params = useParams();
+  const id = params.id as string;
+  const [tab, setTab] = useState<"signals" | "radar" | "settings">("signals");
 
-  const id = Array.isArray(params.id) ? params.id[0] : params.id;
-
-  useEffect(() => {
-    if (!id) return;
-
-    const load = async () => {
-      const [competitorsRes, signalsRes] = await Promise.all([
-        fetch("/api/competitors"),
-        fetch(`/api/signals?competitor_id=${encodeURIComponent(id)}&limit=200`),
-      ]);
-
-      const competitorsJson = await competitorsRes.json();
-      const signalsJson = await signalsRes.json();
-
-      const current = ((competitorsJson.competitors as ApiCompetitor[] | undefined) ?? []).find((item) => item.id === id) ?? null;
-      setCompetitor(current);
-      setSignals(((signalsJson.signals as ApiSignal[] | undefined) ?? []).sort((a, b) => {
-        return new Date(b.detected_at ?? 0).getTime() - new Date(a.detected_at ?? 0).getTime();
-      }));
-    };
-
-    void load();
-  }, [id]);
-
-  const threatScore = useMemo(() => {
-    const weekly = signals.filter((signal) => {
-      if (!signal.detected_at) return false;
-      return Date.now() - new Date(signal.detected_at).getTime() <= 7 * 24 * 60 * 60 * 1000;
-    }).length;
-    return Math.min(95, 25 + signals.length * 4 + weekly * 8);
-  }, [signals]);
-
-  const threat = threatScore >= 70 ? "high" : threatScore >= 45 ? "medium" : "low";
-  const tc = threatColors[threat];
-
-  const filteredSignals =
-    signalTypeFilter === "ALL"
-      ? signals
-      : signals.filter((signal) => configForType(signal.signal_type).label === signalTypeFilter);
-
-  const typeFilterOptions = [
-    "ALL",
-    ...new Set(signals.map((signal) => configForType(signal.signal_type).label)),
-  ];
-
-  const radarData = radarAxes.map((axis) => ({
-    axis: configForType(axis).label,
-    COMPETITOR: signals.filter((signal) => signal.signal_type === axis).length,
-  }));
-
-  if (!competitor) {
-    return (
-      <div className="scanlines min-h-screen bg-background">
-        <DashboardSidebar />
-        <main className="ml-60 p-6">
-          <Button variant="outline" onClick={() => router.push("/competitors")} className="font-pixel text-[8px] text-primary border-primary rounded-none">← BACK TO ROSTER</Button>
-          <p className="font-terminal text-sm text-muted-foreground mt-4">Competitor not found.</p>
-        </main>
-      </div>
-    );
-  }
+  const comp = COMPETITORS.find((c) => c.id === id) ?? COMPETITORS[0];
+  const signals = SIGNALS.filter((s) => s.competitor_id === id);
+  const threatColor = comp.threat === "critical" ? "#FF00FF" : comp.threat === "medium" ? "#00FFFF" : "#00FF41";
 
   return (
-    <div className="scanlines min-h-screen bg-background">
-      <DashboardSidebar />
-      <main className="ml-60 p-6 space-y-6 dashboard-scroll">
-        <button onClick={() => router.push("/competitors")} className="font-pixel text-[8px] text-primary hover:text-primary/80 transition-colors">← BACK TO ROSTER</button>
+    <div className="space-y-6">
+      <Link href="/competitors" className="inline-flex items-center gap-2 text-[#00FF41] hover:underline text-sm" style={{ fontFamily: "var(--font-space-mono)" }}>
+        ← BACK TO ROSTER
+      </Link>
 
-        <div className={`bg-card border ${tc.border} p-6`}>
-          <div className="flex flex-col lg:flex-row items-start gap-6">
-            <Avatar className={`h-28 w-28 border-3 ${tc.ring}`}>
-              <AvatarFallback className={`bg-card ${tc.text} font-pixel text-2xl`}>{competitor.name.slice(0, 2).toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="font-pixel text-lg text-foreground">{competitor.name}</h1>
-                <Badge variant="outline" className="font-terminal text-xs text-neon-cyan border-neon-cyan rounded-none">MONITORED</Badge>
-              </div>
-              <p className="font-terminal text-sm text-muted-foreground mb-1">{competitor.website_url ?? "—"} · {competitor.twitter_handle ? `@${competitor.twitter_handle.replace(/^@/, "")}` : "—"}</p>
-              <div className="flex gap-6 mt-3 font-terminal text-sm">
-                <div><span className="text-muted-foreground">MONITORING SINCE: </span><span className="text-foreground">{competitor.created_at ? new Date(competitor.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" }).toUpperCase() : "—"}</span></div>
-                <div><span className="text-muted-foreground">TOTAL SIGNALS: </span><span className="text-neon-cyan">{signals.length}</span></div>
-                <div><span className="text-muted-foreground">LAST ACTIVE: </span><span className="text-foreground">{formatTimeAgo(signals[0]?.detected_at ?? null)}</span></div>
-              </div>
+      {/* Top company header card — avatar left, stacked rows right */}
+      <div className="bg-[#0a0a0a] border rounded-lg p-6 flex gap-6" style={{ borderColor: threatColor, borderWidth: 1 }}>
+        <div className="w-[120px] h-[120px] rounded-xl border-2 flex items-center justify-center text-4xl font-bold shrink-0" style={{ borderColor: threatColor, color: threatColor }}>{comp.name.charAt(0)}</div>
+        <div className="flex-1 min-w-0 flex flex-col gap-3">
+          {/* Row 1: Company name */}
+          <p className="text-white text-3xl font-medium" style={{ fontFamily: "var(--font-space-mono)" }}>{comp.name}</p>
+          {/* Row 2: Category pill + website URL same line */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-block px-2 py-0.5 rounded text-[12px] bg-[#00FFFF]/20 text-[#00FFFF]" style={{ fontFamily: "var(--font-space-mono)" }}>{comp.category}</span>
+            <span className="text-[12px] text-[#888888]" style={{ fontFamily: "var(--font-ibm-plex-mono)" }}>{comp.website_url}</span>
+          </div>
+          {/* Row 3: Twitter if present */}
+          {comp.twitter && (
+            <p className="text-[12px] text-[#888888]" style={{ fontFamily: "var(--font-ibm-plex-mono)" }}>@{comp.twitter}</p>
+          )}
+          {/* Row 4: Three stat blocks — label 11px #888888, value Space Mono 16px colored */}
+          <div className="flex flex-wrap gap-6">
+            <div>
+              <p className="text-[11px] text-[#888888] mb-0.5" style={{ fontFamily: "var(--font-ibm-plex-mono)" }}>MONITORING SINCE</p>
+              <p className="text-[16px] font-medium" style={{ fontFamily: "var(--font-space-mono)", color: "#00FFFF" }}>{comp.monitoring_since}</p>
             </div>
-            <div className="text-right">
-              <p className="font-pixel text-[8px] text-muted-foreground mb-2">THREAT SCORE</p>
-              <p className={`font-pixel text-2xl ${tc.text}`}>{threatScore}/100</p>
-              <div className="w-24 h-2 bg-muted mt-2"><div className={`h-full ${tc.bg}`} style={{ width: `${threatScore}%` }} /></div>
+            <div>
+              <p className="text-[11px] text-[#888888] mb-0.5" style={{ fontFamily: "var(--font-ibm-plex-mono)" }}>TOTAL SIGNALS</p>
+              <p className="text-[16px] font-medium" style={{ fontFamily: "var(--font-space-mono)", color: "#00FF41" }}>{comp.signal_count}</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-[#888888] mb-0.5" style={{ fontFamily: "var(--font-ibm-plex-mono)" }}>LAST ACTIVE</p>
+              <p className="text-[16px] font-medium text-white" style={{ fontFamily: "var(--font-space-mono)" }}>{comp.last_seen}</p>
+            </div>
+          </div>
+          {/* Row 5: Threat score label + full width bar + percentage right-aligned magenta */}
+          <div>
+            <p className="text-[11px] text-[#888888] mb-1" style={{ fontFamily: "var(--font-ibm-plex-mono)" }}>THREAT SCORE</p>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full rounded-full bg-[#FF00FF]" style={{ width: `${comp.threatScore}%` }} />
+              </div>
+              <span className="text-[16px] font-bold shrink-0" style={{ fontFamily: "var(--font-space-mono)", color: "#FF00FF" }}>{comp.threatScore}%</span>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="flex gap-1 border-b border-muted">
-          {tabs.map((t) => (
-            <button
-              key={t}
-              onClick={() => setActiveTab(t)}
-              className={`font-pixel text-[8px] px-4 py-3 transition-colors ${activeTab === t ? "text-primary border-b-2 border-primary" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              {t}
-            </button>
+      <div className="flex gap-6 border-b border-white/10">
+        {(["signals", "radar", "settings"] as const).map((t) => (
+          <button key={t} onClick={() => setTab(t)} className={`pb-2 text-xs uppercase tracking-wider ${tab === t ? "text-[#00FF41] border-b-2 border-[#00FF41]" : "text-white/60"}`} style={{ fontFamily: "var(--font-space-mono)" }}>{t}</button>
+        ))}
+      </div>
+
+      {tab === "signals" && (
+        <div className="space-y-3">
+          {signals.map((s) => (
+            <div key={s.id} className="bg-[#0a0a0a] border rounded-lg p-4 flex flex-wrap gap-4" style={{ borderLeftWidth: 4, borderLeftColor: TYPE_COLORS[s.type] || "#00FF41" }}>
+              <span className="px-2 py-0.5 rounded text-[10px] uppercase" style={{ fontFamily: "var(--font-space-mono)", backgroundColor: `${TYPE_COLORS[s.type]}30`, color: TYPE_COLORS[s.type] }}>{s.type}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-medium" style={{ fontFamily: "var(--font-ibm-plex-mono)" }}>{s.title}</p>
+                <p className="text-white/60 text-sm mt-0.5" style={{ fontFamily: "var(--font-ibm-plex-mono)" }}>{s.summary}</p>
+              </div>
+              <span className="text-white/50 text-xs" style={{ fontFamily: "var(--font-ibm-plex-mono)" }}>{formatTimeAgo(s.detected_at)}</span>
+            </div>
           ))}
         </div>
+      )}
 
-        {activeTab === "SIGNALS" && (
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              {typeFilterOptions.map((f) => (
-                <button key={f} onClick={() => setSignalTypeFilter(f)} className={`font-pixel text-[7px] px-3 py-2 border transition-colors ${signalTypeFilter === f ? "bg-primary text-background border-primary" : "bg-transparent text-primary border-primary hover:bg-primary/10"}`}>{f}</button>
-              ))}
-            </div>
-            <div className="space-y-3">
-              {filteredSignals.map((s) => {
-                const stc = configForType(s.signal_type);
-                return (
-                  <div key={s.id} className={`bg-card border-l-4 ${stc.borderClass} border border-muted p-4 flex gap-4`}>
-                    <div className="flex flex-col items-center gap-2 shrink-0 w-16">
-                      <Badge variant="outline" className={`font-terminal text-[9px] ${stc.borderClass} rounded-none`} style={{ color: stc.color }}>{stc.label}</Badge>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-terminal text-lg text-foreground mb-1">{s.title}</p>
-                      <p className="font-terminal text-sm text-muted-foreground mb-2 line-clamp-2">{s.summary ?? "No summary available"}</p>
-                      <p className="font-terminal text-[10px] text-muted-foreground/50">via {s.source}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="font-terminal text-xs text-muted-foreground mb-2">{formatTimeAgo(s.detected_at)}</p>
-                      <p className="font-terminal text-sm text-neon-gold">⚡ {s.importance_score ?? 5}/10</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+      {tab === "radar" && (
+        <div className="bg-[#0a0a0a] border border-[#00FF41]/30 rounded-lg p-6">
+          <div className="h-80 mb-6">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={RADAR_VS}>
+                <PolarGrid stroke="#00FF41" strokeOpacity={0.15} />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: "#fff", fontSize: 11 }} />
+                <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: "#fff", fontSize: 8 }} />
+                <Radar name="Notion" dataKey="Notion" stroke="#FF00FF" fill="#FF00FF" fillOpacity={0.3} />
+                <Radar name="YOUR PRODUCT" dataKey="YOUR PRODUCT" stroke="#00FFFF" strokeDasharray="4 4" fill="#00FFFF" fillOpacity={0.1} />
+                <Legend />
+              </RadarChart>
+            </ResponsiveContainer>
           </div>
-        )}
-
-        {activeTab === "RADAR" && (
-          <div className="space-y-4">
-            <div className="bg-card border border-muted p-6">
-              <ResponsiveContainer width="100%" height={350}>
-                <RadarChart data={radarData}>
-                  <PolarGrid stroke="hsl(120,100%,50%)" strokeOpacity={0.15} />
-                  <PolarAngleAxis dataKey="axis" tick={{ fill: "hsl(0,0%,55%)", fontSize: 13, fontFamily: "VT323" }} />
-                  <Radar name={competitor.name} dataKey="COMPETITOR" stroke="hsl(180,100%,50%)" fill="hsl(180,100%,50%)" fillOpacity={0.1} strokeWidth={2} dot={{ r: 4, fill: "hsl(180,100%,50%)" }} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
+          <div className="space-y-2 p-4 bg-black/30 rounded">
+            <p className="text-white/80 text-sm" style={{ fontFamily: "var(--font-ibm-plex-mono)" }}>Notion leads on Marketing by 30%</p>
+            <p className="text-white/80 text-sm" style={{ fontFamily: "var(--font-ibm-plex-mono)" }}>Notion leads on Product by 30%</p>
+            <p className="text-white/80 text-sm" style={{ fontFamily: "var(--font-ibm-plex-mono)" }}>Your product closer on Funding</p>
           </div>
-        )}
+        </div>
+      )}
 
-        {activeTab === "SETTINGS" && (
-          <div className="max-w-xl space-y-6">
-            <div className="bg-card border border-muted p-6 space-y-4">
-              <h3 className="font-pixel text-[9px] text-foreground mb-4">MONITORED URLS</h3>
-              <div><Label className="font-terminal text-sm text-muted-foreground">Website</Label><Input className="terminal-input font-terminal text-sm mt-1" defaultValue={competitor.website_url ?? ""} readOnly /></div>
-              <div><Label className="font-terminal text-sm text-muted-foreground">Twitter</Label><Input className="terminal-input font-terminal text-sm mt-1" defaultValue={competitor.twitter_handle ?? ""} readOnly /></div>
-            </div>
-            <div className="bg-card border border-muted p-6 space-y-4">
-              <h3 className="font-pixel text-[9px] text-foreground mb-4">ALERT TYPES</h3>
-              {["Feature Updates", "Pricing Changes", "Social Posts", "Funding News", "Hiring Activity", "Product Launches"].map((t) => (
+      {tab === "settings" && (
+        <div className="bg-[#0a0a0a] border border-white/10 rounded-lg p-6 max-w-xl space-y-6">
+          <div>
+            <label className="block text-white/70 text-xs mb-2" style={{ fontFamily: "var(--font-space-mono)" }}>Website URL</label>
+            <input defaultValue={comp.website_url} className="w-full px-4 py-3 bg-black border border-[#00FF41] text-white focus:outline-none focus:ring-1 focus:ring-[#00FF41]" style={{ fontFamily: "var(--font-ibm-plex-mono)" }} />
+          </div>
+          <div>
+            <label className="block text-white/70 text-xs mb-2" style={{ fontFamily: "var(--font-space-mono)" }}>Twitter</label>
+            <input defaultValue={comp.twitter} className="w-full px-4 py-3 bg-black border border-[#00FF41] text-white focus:outline-none focus:ring-1 focus:ring-[#00FF41]" style={{ fontFamily: "var(--font-ibm-plex-mono)" }} />
+          </div>
+          <div>
+            <label className="block text-white/70 text-xs mb-2" style={{ fontFamily: "var(--font-space-mono)" }}>Product Hunt slug</label>
+            <input defaultValue={comp.product_hunt} className="w-full px-4 py-3 bg-black border border-[#00FF41] text-white focus:outline-none focus:ring-1 focus:ring-[#00FF41]" style={{ fontFamily: "var(--font-ibm-plex-mono)" }} />
+          </div>
+          <div>
+            <p className="text-white/70 text-xs mb-3" style={{ fontFamily: "var(--font-space-mono)" }}>Alert toggles</p>
+            <div className="space-y-2">
+              {["Feature", "Pricing", "Social", "Hiring", "Funding"].map((t) => (
                 <div key={t} className="flex items-center justify-between">
-                  <span className="font-terminal text-sm text-muted-foreground">{t}</span>
-                  <Switch defaultChecked className="data-[state=checked]:bg-primary" />
+                  <span className="text-white/70 text-sm" style={{ fontFamily: "var(--font-ibm-plex-mono)" }}>{t}</span>
+                  <button type="button" className="w-10 h-5 rounded-full bg-[#00FF41]/30 relative" aria-label={`Toggle ${t}`}>
+                    <span className="absolute left-1 top-1 w-3 h-3 rounded-full bg-[#00FF41]" />
+                  </button>
                 </div>
               ))}
             </div>
-            <Button variant="outline" className="font-pixel text-[7px] text-destructive border-destructive rounded-none hover:bg-destructive/10" onClick={() => router.push("/competitors")}>BACK TO ROSTER</Button>
           </div>
-        )}
-      </main>
+          <button className="mt-8 px-4 py-2 rounded text-red-400/80 text-xs border border-red-400/30" style={{ fontFamily: "var(--font-space-mono)" }}>DELETE COMPETITOR</button>
+        </div>
+      )}
     </div>
   );
 }

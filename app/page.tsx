@@ -1,81 +1,152 @@
-import Link from "next/link";
- 
-const features = [
-  {
-    icon: "👾",
-    title: "Track Signals",
-    desc: "Monitor competitor websites, socials, and launches in real-time.",
-    borderClass: "border-primary glow-green",
-  },
-  {
-    icon: "🧠",
-    title: "AI Analysis",
-    desc: "Insights personalized to your product positioning and market.",
-    borderClass: "border-secondary glow-magenta",
-  },
-  {
-    icon: "📡",
-    title: "Weekly Digest",
-    desc: "Delivered to your inbox every Monday. Never miss a move.",
-    borderClass: "border-accent glow-cyan",
-  },
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
+const PHRASES = [
+  "Scanning competitors...",
+  "Loading signals...",
+  "Initializing intelligence...",
 ];
 
-export default function Home() {
+const FULL_TEXT = "Welcome to CompetitorPulse";
+const TYPEWRITER_DURATION_MS = 2500;
+const LOADING_BAR_DURATION_MS = 1500;
+const PHRASE_INTERVAL_MS = 800;
+const TOTAL_BEFORE_REDIRECT = TYPEWRITER_DURATION_MS + LOADING_BAR_DURATION_MS + 800;
+
+export default function LoadingPage() {
+  const router = useRouter();
+  const [visibleLength, setVisibleLength] = useState(0);
+  const [showBar, setShowBar] = useState(false);
+  const [barProgress, setBarProgress] = useState(0);
+  const [phraseIndex, setPhraseIndex] = useState(0);
+  const [fadeOut, setFadeOut] = useState(false);
+
+  useEffect(() => {
+    const charCount = FULL_TEXT.length;
+    const interval = TYPEWRITER_DURATION_MS / charCount;
+    const t = setInterval(() => {
+      setVisibleLength((n) => {
+        if (n >= charCount) {
+          clearInterval(t);
+          setShowBar(true);
+          return n;
+        }
+        return n + 1;
+      });
+    }, interval);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    if (!showBar) return;
+    const start = Date.now();
+    const frame = () => {
+      const elapsed = Date.now() - start;
+      const p = Math.min(1, elapsed / LOADING_BAR_DURATION_MS);
+      setBarProgress(p);
+      if (p < 1) requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  }, [showBar]);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setPhraseIndex((i) => (i + 1) % PHRASES.length);
+    }, PHRASE_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setFadeOut(true);
+    }, TOTAL_BEFORE_REDIRECT);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    if (!fadeOut) return;
+    const t = setTimeout(() => {
+      router.replace("/landing");
+    }, 600);
+    return () => clearTimeout(t);
+  }, [fadeOut, router]);
+
   return (
-    <main className="scanlines min-h-screen bg-background">
-      <section className="neon-grid-bg min-h-screen flex flex-col items-center justify-center px-4 text-center">
-        <h1 className="font-pixel text-xl sm:text-3xl md:text-4xl text-foreground text-glow-green leading-relaxed mb-6 max-w-4xl">
-          Know Every Move Your Competitors Make
-        </h1>
-        <p className="font-terminal text-xl sm:text-2xl md:text-3xl text-muted-foreground mb-10 max-w-2xl">
-          AI-powered competitive intelligence. Delivered weekly. Zero effort.
-        </p>
-        <Link
-          href="/auth/sign-up"
-          className="font-pixel text-sm sm:text-base border-2 border-secondary bg-background text-secondary px-8 py-4 hover:glow-green hover:text-primary hover:border-primary transition-all duration-200"
+    <div
+      className={`fixed inset-0 bg-black flex flex-col items-center justify-center transition-opacity duration-500 ${
+        fadeOut ? "opacity-0" : "opacity-100"
+      }`}
+    >
+      <div className="scanlines" aria-hidden />
+
+      <div className="relative z-10 flex flex-col items-center max-w-2xl px-6">
+        <h1
+          className="font-[family-name:var(--font-press-start)] text-[#00FF41] text-center text-xl sm:text-2xl md:text-3xl mb-6"
+          style={{ fontFamily: "var(--font-press-start)" }}
         >
-          GET STARTED →
-        </Link>
-      </section>
+          {FULL_TEXT.slice(0, visibleLength)}
+          <span
+            className="inline-block w-2 h-6 sm:h-8 ml-0.5 align-middle bg-[#00FF41] animate-pulse"
+            style={{ animationDuration: "0.6s" }}
+          />
+        </h1>
 
-      <section className="py-20 px-4">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-          {features.map((feature) => (
+        {showBar && (
+          <div className="w-full max-w-md h-3 border border-[#00FF41] rounded-sm overflow-hidden bg-black mb-6">
             <div
-              key={feature.title}
-              className={`border-2 ${feature.borderClass} bg-background p-8 transition-all duration-300 hover:-translate-y-2`}
-            >
-              <div className="text-4xl mb-4">{feature.icon}</div>
-              <h3 className="font-pixel text-xs sm:text-sm text-foreground mb-3">
-                {feature.title}
-              </h3>
-              <p className="font-terminal text-lg text-muted-foreground">
-                {feature.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <footer className="border-t border-primary py-6 px-4">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="font-pixel text-[8px] sm:text-[10px] text-muted-foreground">
-            CompetitorPulse © 2025
-          </span>
-          <div className="flex items-center gap-2">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <div
-                key={index}
-                className="w-1.5 h-1.5 rounded-full bg-primary opacity-40"
-              />
-            ))}
+              className="h-full bg-[#00FF41] transition-all duration-75"
+              style={{
+                width: `${barProgress * 100}%`,
+                boxShadow: "0 0 10px #00FF41",
+              }}
+            />
           </div>
-          <span className="font-pixel text-[8px] sm:text-[10px] text-muted-foreground">
-            Built at NYU Buildathon 🎮
-          </span>
+        )}
+
+        {showBar && (
+          <p
+            className="text-[#00FF41]/90 text-sm sm:text-base"
+            style={{ fontFamily: "var(--font-press-start)" }}
+          >
+            {PHRASES[phraseIndex]}
+          </p>
+        )}
+      </div>
+
+      {/* Pac-Man dots row at bottom */}
+      <div
+        className="absolute bottom-8 left-0 right-0 flex justify-center items-center gap-1 px-4 overflow-hidden"
+        style={{ fontFamily: "var(--font-press-start)" }}
+      >
+        <div className="flex items-center gap-1 animate-pacman-track">
+          <span
+            className="inline-block w-2 h-2 rounded-full bg-[#00FF41] opacity-90"
+            style={{ boxShadow: "0 0 6px #00FF41" }}
+          />
+          <span
+            className="inline-block w-2 h-2 rounded-full bg-[#00FF41] opacity-90"
+            style={{ boxShadow: "0 0 6px #00FF41" }}
+          />
+          <span
+            className="inline-block w-2 h-2 rounded-full bg-[#00FF41] opacity-90"
+            style={{ boxShadow: "0 0 6px #00FF41" }}
+          />
+          <span
+            className="inline-block w-2 h-2 rounded-full bg-[#00FF41] opacity-90"
+            style={{ boxShadow: "0 0 6px #00FF41" }}
+          />
+          <span
+            className="inline-block w-2 h-2 rounded-full bg-[#00FF41] opacity-90"
+            style={{ boxShadow: "0 0 6px #00FF41" }}
+          />
+          <span
+            className="pacman-mouth inline-block w-4 h-4 rounded-full border-2 border-[#00FF41] border-r-transparent bg-transparent"
+            style={{ boxShadow: "0 0 8px #00FF41" }}
+          />
         </div>
-      </footer>
-    </main>
+      </div>
+    </div>
   );
 }

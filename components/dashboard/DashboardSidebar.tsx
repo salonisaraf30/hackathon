@@ -1,55 +1,62 @@
 "use client";
 
-import { NavLink } from "@/components/NavLink";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { LayoutDashboard, Users, Radio, FileText, Settings } from "lucide-react";
 
-const navItems = [
-  { title: "Dashboard", url: "/dashboard", icon: "🏠" },
-  { title: "Competitors", url: "/competitors", icon: "👾" },
-  { title: "Digest", url: "/digest", icon: "📬" },
-  { title: "Signals", url: "/signals", icon: "📡" },
-  
-  { title: "Settings", url: "/settings", icon: "⚙" },
+const nav = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/competitors", label: "Competitors", icon: Users },
+  { href: "/signals", label: "Signals", icon: Radio },
+  { href: "/digest", label: "Digest", icon: FileText },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export default function DashboardSidebar() {
+  const pathname = usePathname();
+
   return (
-    <aside className="fixed left-0 top-0 h-screen w-60 bg-background border-r border-primary flex flex-col z-40">
-      <div className="p-5 border-b border-muted">
-        <span className="font-pixel text-xs text-primary text-glow-green leading-relaxed">
-          ⚡ COMPETITOR
-          <br />
-          &nbsp;&nbsp;&nbsp;PULSE
+    <aside
+        className="w-[240px] shrink-0 flex flex-col"
+        style={{
+          background: "rgba(255, 255, 255, 0.08)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderRight: "1px solid rgba(0, 255, 65, 0.3)",
+          boxShadow: "4px 0 24px rgba(0, 0, 0, 0.3)",
+        }}
+      >
+      <div className="p-4 border-b border-[#00FF41]/30">
+        <span className="text-[#00FF41] text-xs" style={{ fontFamily: "var(--font-space-mono)" }}>
+          ⚡ CompetitorPulse
         </span>
       </div>
-
-      <nav className="flex-1 py-4">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.title}
-            to={item.url}
-            className="flex items-center gap-3 px-5 py-3 font-terminal text-lg text-muted-foreground hover:text-primary transition-colors border-l-2 border-transparent"
-            activeClassName="border-l-2 !border-primary !text-primary"
-          >
-            <span>{item.icon}</span>
-            <span>{item.title}</span>
-          </NavLink>
-        ))}
+      <nav className="flex-1 p-2 space-y-0.5">
+        {nav.map(({ href, label, icon: Icon }) => {
+          const isActive = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-r text-sm transition-colors relative ${
+                isActive ? "text-[#00FF41]" : "text-white/70 hover:bg-white/5 hover:text-white"
+              }`}
+              style={{ fontFamily: "var(--font-space-mono)" }}
+            >
+              {isActive && <div className="absolute left-0 top-1 bottom-1 w-0.5 bg-[#00FF41] rounded-r" />}
+              <Icon className="w-5 h-5 shrink-0 ml-0.5" />
+              {label}
+            </Link>
+          );
+        })}
       </nav>
-
-      <div className="p-4 border-t border-muted">
-        <div className="flex items-center gap-3 mb-3">
-          <Avatar className="h-8 w-8 border border-primary glow-green">
-            <AvatarFallback className="bg-card text-primary font-pixel text-[8px]">P1</AvatarFallback>
-          </Avatar>
-          <div>
-            <p className="font-pixel text-[7px] text-primary">PLAYER 1</p>
-            <p className="font-terminal text-xs text-muted-foreground">LVL 4</p>
-          </div>
+      <div className="p-4 border-t border-[#00FF41]/30 flex items-center gap-3">
+        <div className="w-8 h-8 rounded-full border border-[#00FF41]/50 flex items-center justify-center text-[#00FF41] text-xs font-bold" style={{ fontFamily: "var(--font-space-mono)" }}>
+          U
         </div>
-        <div className="font-terminal text-[10px] text-primary">
-          <span>██████░░ 2400/3000 XP</span>
-        </div>
+        <span className="text-white/50 text-xs truncate" style={{ fontFamily: "var(--font-ibm-plex-mono)" }}>
+          user@competitorpulse.io
+        </span>
       </div>
     </aside>
   );

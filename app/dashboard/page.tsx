@@ -1,378 +1,188 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  Radar,
-} from "recharts";
-import { Plus } from "lucide-react";
+  COMPETITORS,
+  SIGNALS,
+  RADAR_DATA,
+  formatTimeAgo,
+  TYPE_COLORS,
+} from "@/lib/dashboard-data";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from "recharts";
 
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { signalTypeConfig, threatColors } from "@/data/mock-data";
+const QUICK_STATS_3 = [
+  { label: "COMPETITORS TRACKED", value: "3", color: "#00FF41" },
+  { label: "SIGNALS THIS WEEK", value: "14", color: "#00FFFF" },
+  { label: "THREAT ALERTS", value: "2", color: "#FF00FF" },
+];
 
-type ApiCompetitor = {
-  id: string;
-  name: string;
-  website_url: string | null;
-  twitter_handle: string | null;
-  created_at: string | null;
-  signals?: { count?: number }[];
-};
-
-type ApiSignal = {
-  id: string;
-  competitor_id: string | null;
-  signal_type: string;
-  title: string;
-  summary: string | null;
-  source: string;
-  importance_score: number | null;
-  detected_at: string | null;
-  competitors?: { name?: string } | { name?: string }[] | null;
-};
-
-type ApiDigest = { id: string; generated_at: string | null };
-
-type UiCompetitor = {
-  id: string;
-  name: string;
-  initials: string;
-  threat: "low" | "medium" | "high";
-  threatScore: number;
-  signals: number;
-  signalsThisWeek: number;
-  lastActive: string;
-  biggestMove: string;
-  website: string;
-  twitter: string;
-  monitoringSince: string;
-  color: string;
-};
-
-const COLORS = ["hsl(300,100%,50%)", "hsl(51,100%,50%)", "hsl(120,100%,50%)", "hsl(180,100%,50%)"];
-
-function formatTimeAgo(value: string | null): string {
-  if (!value) return "—";
-  const timestamp = new Date(value).getTime();
-  if (Number.isNaN(timestamp)) return "—";
-  const diffMs = Date.now() - timestamp;
-  const hours = Math.floor(diffMs / (1000 * 60 * 60));
-  if (hours < 1) return "NOW";
-  if (hours < 24) return `${hours}H AGO`;
-  const days = Math.floor(hours / 24);
-  return `${days}D AGO`;
-}
-
-function safeHost(url: string | null): string {
-  if (!url) return "—";
-  try {
-    return new URL(url).host;
-  } catch {
-    return url;
-  }
-}
-
-function signalConfig(type: string) {
-  return (
-    signalTypeConfig[type] ?? {
-      color: "hsl(180,100%,50%)",
-      label: type.toUpperCase(),
-      dotClass: "bg-neon-cyan",
-      borderClass: "border-neon-cyan",
-    }
-  );
-}
+const topCompetitor = COMPETITORS[0];
+const threatColor = (t: string) => (t === "critical" ? "#FF00FF" : t === "medium" ? "#00FFFF" : "#00FF41");
+const typeAccent = (type: string) => (TYPE_COLORS[type] === "#FF00FF" ? "#FF00FF" : TYPE_COLORS[type] === "#00FF41" ? "#00FF41" : "#00FFFF");
 
 export default function DashboardPage() {
-  const [competitors, setCompetitors] = useState<UiCompetitor[]>([]);
-  const [signals, setSignals] = useState<ApiSignal[]>([]);
-  const [digests, setDigests] = useState<ApiDigest[]>([]);
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
-
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const [competitorsRes, signalsRes, digestsRes] = await Promise.all([
-          fetch("/api/competitors"),
-          fetch("/api/signals?limit=200"),
-          fetch("/api/digests"),
-        ]);
-
-        const competitorsJson = await competitorsRes.json();
-        const signalsJson = await signalsRes.json();
-        const digestsJson = await digestsRes.json();
-
-        const rawSignals = ((signalsJson.signals as ApiSignal[] | undefined) ?? []).sort((a, b) => {
-          return new Date(b.detected_at ?? 0).getTime() - new Date(a.detected_at ?? 0).getTime();
-        });
-
-        setSignals(rawSignals);
-        setDigests((digestsJson.digests as ApiDigest[] | undefined) ?? []);
-
-        const rawCompetitors = (competitorsJson.competitors as ApiCompetitor[] | undefined) ?? [];
-
-        const mapped = rawCompetitors.map((item, index) => {
-          const compSignals = rawSignals.filter((signal) => signal.competitor_id === item.id);
-          const latestSignal = compSignals[0];
-          const weekSignals = compSignals.filter((signal) => {
-            if (!signal.detected_at) return false;
-            const age = Date.now() - new Date(signal.detected_at).getTime();
-            return age <= 7 * 24 * 60 * 60 * 1000;
-          }).length;
-          const totalSignals = compSignals.length || item.signals?.[0]?.count || 0;
-          const threatScore = Math.min(95, 25 + totalSignals * 4 + weekSignals * 8);
-          const threat = threatScore >= 70 ? "high" : threatScore >= 45 ? "medium" : "low";
-
-          return {
-            id: item.id,
-            name: item.name,
-            initials: item.name.slice(0, 2).toUpperCase(),
-            threat,
-            threatScore,
-            signals: totalSignals,
-            signalsThisWeek: weekSignals,
-            lastActive: formatTimeAgo(latestSignal?.detected_at ?? null),
-            biggestMove: latestSignal?.title ?? "No major move detected",
-            website: safeHost(item.website_url),
-            twitter: item.twitter_handle ? `@${item.twitter_handle.replace(/^@/, "")}` : "—",
-            monitoringSince: item.created_at
-              ? new Date(item.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" }).toUpperCase()
-              : "—",
-            color: COLORS[index % COLORS.length],
-          } as UiCompetitor;
-        });
-
-        setCompetitors(mapped);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void load();
-  }, []);
-
-  const boss = useMemo(() => {
-    return [...competitors].sort((a, b) => b.threatScore - a.threatScore)[0] ?? null;
-  }, [competitors]);
-
-  const stats = useMemo(() => {
-    const weeklySignals = signals.filter((signal) => {
-      if (!signal.detected_at) return false;
-      const age = Date.now() - new Date(signal.detected_at).getTime();
-      return age <= 7 * 24 * 60 * 60 * 1000;
-    }).length;
-
-    const threatAlerts = competitors.filter((item) => item.threat === "high").length;
-    const latestDigest = digests[0]?.generated_at;
-
-    return [
-      { icon: "👾", label: "COMPETITORS TRACKED", value: `${competitors.length}`, color: "text-primary", border: "border-primary" },
-      { icon: "📡", label: "SIGNALS THIS WEEK", value: `${weeklySignals}`, color: "text-neon-cyan", border: "border-neon-cyan" },
-      { icon: "🔥", label: "THREAT ALERTS", value: `${threatAlerts}`, color: "text-neon-magenta", border: "border-neon-magenta" },
-      {
-        icon: "📬",
-        label: "LATEST DIGEST",
-        value: latestDigest
-          ? new Date(latestDigest).toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase()
-          : "NONE",
-        color: "text-neon-gold",
-        border: "border-neon-gold",
-      },
-    ];
-  }, [competitors, digests, signals]);
-
-  const recentSignals = useMemo(() => signals.slice(0, 6), [signals]);
-
-  const radarCompetitors = useMemo(() => competitors.slice(0, 3), [competitors]);
-
-  const radarData = useMemo(() => {
-    const axes = ["feature_update", "pricing_change", "social_post", "funding", "hiring", "product_launch"];
-    return axes.map((axis) => {
-      const row: Record<string, string | number> = { axis: signalConfig(axis).label };
-      for (const competitor of radarCompetitors) {
-        const count = signals.filter(
-          (signal) => signal.competitor_id === competitor.id && signal.signal_type === axis,
-        ).length;
-        row[competitor.id] = count;
-      }
-      return row;
-    });
-  }, [radarCompetitors, signals]);
-
-  const canRenderRadar =
-    radarCompetitors.length > 0 &&
-    Array.isArray(radarData) &&
-    radarData.length > 0;
+  const signalsThisWeek = SIGNALS.slice(0, 6);
 
   return (
-    <div className="scanlines min-h-screen bg-background">
-      <DashboardSidebar />
-      <main className="ml-60 p-6 space-y-6 dashboard-scroll">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {stats.map((stat) => (
-            <div key={stat.label} className={`bg-card border ${stat.border} p-4 hover:shadow-lg transition-shadow`}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg">{stat.icon}</span>
-                <span className="font-terminal text-xs text-muted-foreground">{stat.label}</span>
-              </div>
-              <p className={`font-pixel text-lg ${stat.color}`}>{stat.value}</p>
-            </div>
-          ))}
-        </div>
-
-        {boss && (
-          <div className="bg-card border border-neon-magenta p-6 glow-magenta relative neon-grid-bg">
-            <Badge className="absolute top-3 right-3 bg-transparent border-neon-gold text-neon-gold font-pixel text-[8px] rounded-none">
-              👑 HIGH PRIORITY
-            </Badge>
-            <div className="flex flex-col lg:flex-row gap-6">
-              <div className="flex items-start gap-4 flex-1">
-                <Avatar className="h-16 w-16 border-2 border-neon-magenta glow-magenta">
-                  <AvatarFallback className="bg-card text-neon-magenta font-pixel text-sm">{boss.initials}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <h2 className="font-pixel text-sm text-foreground mb-1">{boss.name}</h2>
-                  <Badge variant="outline" className="text-neon-cyan border-neon-cyan font-terminal text-xs rounded-none mb-3">
-                    MONITORED
-                  </Badge>
-                  <div className="mt-2">
-                    <p className="font-pixel text-[8px] text-neon-magenta mb-1">THREAT LEVEL: {boss.threat.toUpperCase()}</p>
-                    <div className="w-32 h-2 bg-muted">
-                      <div className="h-full bg-neon-magenta" style={{ width: `${boss.threatScore}%` }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-6 items-center flex-1">
-                <div><p className="font-terminal text-xs text-muted-foreground">SIGNALS THIS WEEK</p><p className="font-terminal text-xl text-neon-cyan">{boss.signalsThisWeek}</p></div>
-                <div><p className="font-terminal text-xs text-muted-foreground">LAST ACTIVE</p><p className="font-terminal text-xl text-foreground">{boss.lastActive}</p></div>
-                <div><p className="font-terminal text-xs text-muted-foreground">LATEST</p><p className="font-terminal text-sm text-neon-gold">{boss.biggestMove}</p></div>
-              </div>
-            </div>
+    <div className="space-y-6">
+      {/* Quick stats — flex row, no cards; 3 metrics + NEXT DIGEST; hr below */}
+      <div className="flex flex-nowrap overflow-visible w-full min-h-[80px] items-center" style={{ gap: "32px" }}>
+        {QUICK_STATS_3.map(({ label, value, color }) => (
+          <div key={label} className="flex items-center shrink-0" style={{ minWidth: 200, gap: 16 }}>
+            <span className="block text-[11px]" style={{ fontFamily: "var(--font-ibm-plex-mono)", color: "#888888" }}>{label}</span>
+            <span className="block text-5xl font-semibold tabular-nums" style={{ fontFamily: "var(--font-space-mono)", color }}>{value}</span>
           </div>
-        )}
+        ))}
+        <div className="py-2">
+          <p className="text-[13px] leading-[1.6]" style={{ fontFamily: "var(--font-ibm-plex-mono)", color: "#888888" }}>NEXT DIGEST</p>
+          <p className="text-2xl font-semibold mt-0.5 text-white" style={{ fontFamily: "var(--font-space-mono)" }}>MON 9AM</p>
+        </div>
+      </div>
+      <hr className="w-full border-0 h-px" style={{ background: "rgba(0, 255, 65, 0.15)" }} />
 
-        <div>
-          <h2 className="font-pixel text-xs text-foreground mb-4">👾 COMPETITOR ROSTER</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {competitors.map((competitor) => {
-              const tc = threatColors[competitor.threat];
-              return (
-                <div
-                  key={competitor.id}
-                  className={`bg-card border ${tc.border} p-5 transition-all duration-200 relative group cursor-pointer`}
-                  onMouseEnter={() => setHoveredCard(competitor.id)}
-                  onMouseLeave={() => setHoveredCard(null)}
-                  style={hoveredCard === competitor.id ? { transform: "translateY(-4px)" } : {}}
-                  onClick={() => router.push(`/competitors/${competitor.id}`)}
-                >
-                  <div className="flex items-center gap-3 mb-4">
-                    <Avatar className={`h-10 w-10 border-2 ${tc.ring}`}>
-                      <AvatarFallback className={`bg-card ${tc.text} font-pixel text-[8px]`}>{competitor.initials}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h3 className="font-pixel text-[8px] text-foreground">{competitor.name}</h3>
-                      <Badge variant="outline" className="font-terminal text-[10px] text-muted-foreground border-muted-foreground rounded-none mt-1">
-                        {competitor.website}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="flex justify-between mb-3 font-terminal text-sm">
-                    <div><p className="text-muted-foreground text-xs">SIGNALS</p><p className="text-neon-cyan">{competitor.signals}</p></div>
-                    <div><p className="text-muted-foreground text-xs">LAST SEEN</p><p className="text-foreground">{competitor.lastActive}</p></div>
-                    <div><p className="text-muted-foreground text-xs">THREAT</p><p className={tc.text}>{competitor.threat.toUpperCase()}</p></div>
-                  </div>
-                  <div className="w-full h-1.5 bg-muted mb-2"><div className={`h-full ${tc.bg}`} style={{ width: `${competitor.threatScore}%` }} /></div>
-                  <p className="font-terminal text-xs text-muted-foreground italic truncate">{competitor.biggestMove}</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="absolute bottom-4 right-4 font-pixel text-[7px] text-primary border-primary opacity-0 group-hover:opacity-100 transition-opacity rounded-none"
-                  >
-                    VIEW INTEL →
-                  </Button>
-                </div>
-              );
-            })}
-            <div className="bg-card border border-dashed border-primary p-5 flex flex-col items-center justify-center gap-3 cursor-pointer hover:glow-green transition-shadow min-h-[200px]" onClick={() => router.push("/competitors") }>
-              <Plus className="h-8 w-8 text-primary" />
-              <span className="font-pixel text-[8px] text-primary">ADD COMPETITOR</span>
+      {/* Hero — top competitor */}
+      <div
+        className="bg-[#0D0D0D] border rounded-lg p-6 flex flex-wrap items-start gap-6 relative overflow-hidden"
+        style={{ borderColor: "#FF00FF", borderWidth: 1 }}
+      >
+        <span className="absolute top-3 right-3 px-2 py-0.5 rounded text-[13px] bg-[#00FFFF]/20 text-[#00FFFF]" style={{ fontFamily: "var(--font-space-mono)" }}>HIGH PRIORITY</span>
+        <div className="flex items-center gap-4 flex-1 min-w-0">
+          <div className="w-20 h-20 rounded-lg border-2 flex items-center justify-center text-2xl font-bold shrink-0" style={{ borderColor: "#FF00FF", color: "#FF00FF", clipPath: "polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)" }}>N</div>
+          <div className="min-w-0">
+            <p className="text-white font-bold text-3xl" style={{ fontFamily: "var(--font-space-mono)" }}>{topCompetitor.name}</p>
+            <span className="inline-block mt-1 px-2 py-0.5 rounded text-[13px] bg-[#00FFFF]/20 text-[#00FFFF]" style={{ fontFamily: "var(--font-space-mono)" }}>{topCompetitor.category}</span>
+            <p className="text-[13px] mt-2 font-semibold text-[#FF00FF]" style={{ fontFamily: "var(--font-ibm-plex-mono)" }}>THREAT LEVEL: CRITICAL</p>
+            <div className="w-32 h-1.5 bg-white/10 rounded-full mt-1 overflow-hidden">
+              <div className="h-full rounded-full bg-[#FF00FF]" style={{ width: "85%" }} />
             </div>
           </div>
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            <h3 className="font-pixel text-xs text-neon-cyan text-glow-cyan mb-4">📡 LIVE SIGNALS</h3>
-            <div className="space-y-1">
-              {recentSignals.map((signal) => {
-                const config = signalConfig(signal.signal_type);
-                const competitorName = Array.isArray(signal.competitors)
-                  ? signal.competitors[0]?.name
-                  : signal.competitors?.name;
-                return (
-                  <div key={signal.id} className="bg-card border border-muted p-3 flex items-center gap-3 hover:border-primary/30 transition-colors">
-                    <div className={`w-2.5 h-2.5 rounded-full ${config.dotClass} shrink-0`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-terminal text-sm"><span className="text-foreground font-bold">{competitorName ?? "COMPETITOR"}</span><span className="text-muted-foreground"> — {signal.title}</span></p>
-                    </div>
-                    <span className="font-terminal text-xs text-muted-foreground shrink-0">{formatTimeAgo(signal.detected_at)}</span>
-                    <Badge variant="outline" className={`font-terminal text-[10px] ${config.borderClass} rounded-none shrink-0`} style={{ color: config.color }}>{config.label}</Badge>
-                  </div>
-                );
-              })}
-              {!loading && recentSignals.length === 0 && <p className="font-terminal text-sm text-muted-foreground">No signals yet. Add competitors and run ingestion.</p>}
-            </div>
-            <Button variant="outline" className="mt-3 font-pixel text-[7px] text-primary border-primary rounded-none w-full" onClick={() => router.push("/signals")}>
-              LOAD MORE SIGNALS →
-            </Button>
+        <div className="flex flex-col gap-3 w-full sm:w-auto sm:min-w-[200px]" style={{ fontFamily: "var(--font-ibm-plex-mono)", fontSize: 13, lineHeight: 1.6 }}>
+          <div>
+            <p className="text-[13px] text-[#888888]">Signals this week</p>
+            <p className="text-white">6</p>
           </div>
           <div>
-            <h3 className="font-pixel text-xs text-neon-magenta text-glow-magenta mb-4">🎯 THREAT RADAR</h3>
-            <div className="bg-card border border-muted p-4">
-              {canRenderRadar ? (
-                <ResponsiveContainer width="100%" height={250}>
-                  <RadarChart data={radarData}>
-                    <PolarGrid stroke="hsl(120,100%,50%)" strokeOpacity={0.15} />
-                    <PolarAngleAxis dataKey="axis" tick={{ fill: "hsl(0,0%,55%)", fontSize: 11, fontFamily: "VT323" }} />
-                    {radarCompetitors.map((item, index) => (
-                      <Radar key={item.id} name={item.name} dataKey={item.id} stroke={COLORS[index % COLORS.length]} fill={COLORS[index % COLORS.length]} fillOpacity={0.08} strokeWidth={2} dot={{ r: 3, fill: COLORS[index % COLORS.length] }} />
-                    ))}
-                  </RadarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-[250px] flex items-center justify-center">
-                  <p className="font-terminal text-sm text-muted-foreground">Add competitors and run ingestion to populate radar.</p>
-                </div>
-              )}
-            </div>
+            <p className="text-[13px] text-[#888888]">Last active</p>
+            <p className="text-white">2h ago</p>
+          </div>
+          <div>
+            <p className="text-[13px] text-[#888888]">Latest move</p>
+            <p className="text-white">New pricing tier</p>
           </div>
         </div>
+        <div className="w-40 h-12 min-h-[48px] min-w-[120px] hidden lg:block">
+          <ResponsiveContainer width="100%" height="100%" minHeight={48}>
+            <LineChart data={topCompetitor.sparkline.map((v, i) => ({ name: i, v }))}>
+              <Line type="monotone" dataKey="v" stroke="#00FF41" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
 
-        <div className="bg-card border border-primary p-6 neon-grid-bg animate-border-pulse">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div>
-              <h3 className="font-pixel text-[10px] sm:text-xs text-primary text-glow-green mb-2">📬 YOUR WEEKLY INTEL BRIEF</h3>
-              <p className="font-terminal text-sm text-muted-foreground">Generated from Supabase signals and Nemotron strategy insights</p>
+      {/* COMPETITOR ROSTER — heading left, ADD COMPETITOR right, one line */}
+      <div className="flex items-center justify-between gap-4 flex-nowrap">
+        <h2 className="text-[#00FF41] text-lg uppercase tracking-wider shrink-0" style={{ fontFamily: "var(--font-space-mono)" }}>COMPETITOR ROSTER</h2>
+        <Link
+          href="/competitors?add=1"
+          className="px-4 py-2 rounded bg-[#00FF41] text-black text-sm font-medium hover:brightness-110 shrink-0 whitespace-nowrap"
+          style={{ fontFamily: "var(--font-space-mono)" }}
+        >
+          + ADD COMPETITOR
+        </Link>
+      </div>
+
+      {/* Competitor cards grid — glassmorphism */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {COMPETITORS.map((c) => (
+          <Link
+            key={c.id}
+            href={`/competitors/${c.id}`}
+            className="group rounded-lg p-4 transition-all relative border border-white/[0.08] hover:border-[var(--hover-border)]"
+            style={{
+              background: "rgba(255, 255, 255, 0.12)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+              ["--hover-border" as string]: threatColor(c.threat),
+            }}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-lg border-2 flex items-center justify-center text-sm font-bold shrink-0" style={{ borderColor: threatColor(c.threat), color: threatColor(c.threat) }}>{c.name.charAt(0)}</div>
+                <div className="min-w-0">
+                  <p className="text-white font-medium text-lg" style={{ fontFamily: "var(--font-space-mono)" }}>{c.name}</p>
+                  <span className="inline-block mt-1 px-1.5 py-0.5 rounded text-[13px] bg-white/10 text-white/80" style={{ fontFamily: "var(--font-space-mono)" }}>{c.category}</span>
+                </div>
+              </div>
             </div>
-            <Button className="font-pixel text-[8px] bg-neon-magenta text-background hover:bg-neon-magenta/80 glow-magenta rounded-none px-6 shrink-0" onClick={() => router.push("/digest")}>
-              VIEW BRIEF →
-            </Button>
+            <p className="mt-2 text-[13px] text-[#888888] italic truncate leading-[1.6]" style={{ fontFamily: "var(--font-ibm-plex-mono)" }}>Latest: New pricing tier for teams</p>
+            <div className="mt-2 h-0.5 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-full rounded-full" style={{ width: `${c.threatScore}%`, backgroundColor: threatColor(c.threat) }} />
+            </div>
+            <div className="mt-3 flex justify-between items-center text-[11px] leading-[1.6]" style={{ fontFamily: "var(--font-ibm-plex-mono)" }}>
+              <span><span className="text-[#888888]">SIGNALS</span> <span className="text-white">{c.signal_count}</span></span>
+              <span><span className="text-[#888888]">LAST SEEN</span> <span className="text-white">{c.last_seen}</span></span>
+            </div>
+            <p className="mt-2 text-[13px] text-[#00FF41] opacity-0 group-hover:opacity-100 transition-opacity" style={{ fontFamily: "var(--font-space-mono)" }}>VIEW INTEL →</p>
+          </Link>
+        ))}
+      </div>
+
+      {/* Weekly Intelligence Brief CTA — first, static green border */}
+      <div
+        className="bg-[#0a0a0a] border rounded-lg p-6 flex flex-wrap items-center justify-between gap-4"
+        style={{ borderColor: "#00FF41", borderWidth: 1 }}
+      >
+        <div>
+          <p className="text-[#00FF41] font-medium text-[13px] leading-[1.6]" style={{ fontFamily: "var(--font-space-mono)" }}>Weekly Intelligence Brief Ready</p>
+          <p className="text-[#888888] text-[13px] mt-1 leading-[1.6]" style={{ fontFamily: "var(--font-ibm-plex-mono)" }}>AI analysis personalized to your product positioning</p>
+        </div>
+        <Link
+          href="/digest"
+          className="px-6 py-3 rounded bg-[#00FF41] text-black font-medium hover:brightness-110 transition-all text-[13px]"
+          style={{ fontFamily: "var(--font-space-mono)" }}
+        >
+          GENERATE BRIEF →
+        </Link>
+      </div>
+
+      {/* Live Signals (65%) + Threat Radar (35%) */}
+      <div className="grid grid-cols-1 lg:grid-cols-[65%_1fr] gap-6">
+        <div className="bg-[#0a0a0a] border rounded-lg p-4" style={{ borderColor: "#00FFFF", borderWidth: 1 }}>
+          <h2 className="text-[#00FFFF] text-[13px] uppercase tracking-wider flex items-center gap-2 mb-4 leading-[1.6]" style={{ fontFamily: "var(--font-space-mono)" }}>
+            LIVE SIGNALS <span className="w-2 h-2 rounded-full bg-[#00FF41]" />
+          </h2>
+          <div className="space-y-2">
+            {signalsThisWeek.map((s) => (
+              <div key={s.id} className="flex items-center gap-3 py-2 border-b border-white/5 last:border-0">
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: typeAccent(s.type) }} />
+                <span className="text-white w-20 shrink-0 text-[13px]" style={{ fontFamily: "var(--font-space-mono)" }}>{s.competitor_name}</span>
+                <span className="text-white flex-1 truncate text-[13px] leading-[1.6]" style={{ fontFamily: "var(--font-ibm-plex-mono)" }}>{s.title}</span>
+                <span className="text-[#888888] text-[13px] shrink-0 leading-[1.6]" style={{ fontFamily: "var(--font-ibm-plex-mono)" }}>{formatTimeAgo(s.detected_at)}</span>
+                <span className="text-[13px] px-1.5 py-0.5 rounded uppercase" style={{ fontFamily: "var(--font-space-mono)", backgroundColor: `${typeAccent(s.type)}30`, color: typeAccent(s.type) }}>{s.type}</span>
+              </div>
+            ))}
+          </div>
+          <button className="mt-3 text-[#00FF41] text-[13px] hover:underline leading-[1.6]" style={{ fontFamily: "var(--font-space-mono)" }}>LOAD MORE →</button>
+        </div>
+        <div className="bg-[#0a0a0a] border rounded-lg p-4" style={{ borderColor: "#FF00FF", borderWidth: 1 }}>
+          <h2 className="text-[#FF00FF] text-[13px] uppercase tracking-wider mb-4 leading-[1.6]" style={{ fontFamily: "var(--font-space-mono)" }}>THREAT RADAR</h2>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={RADAR_DATA}>
+                <PolarGrid stroke="#00FF41" strokeOpacity={0.15} />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: "#fff", fontSize: 11 }} />
+                <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fill: "#fff", fontSize: 10 }} />
+                <Radar name="Notion" dataKey="Notion" stroke="#FF00FF" fill="#FF00FF" fillOpacity={0.3} />
+                <Radar name="Coda" dataKey="Coda" stroke="#00FFFF" fill="#00FFFF" fillOpacity={0.2} />
+                <Radar name="Slite" dataKey="Slite" stroke="#00FF41" fill="#00FF41" fillOpacity={0.2} />
+                <Legend />
+              </RadarChart>
+            </ResponsiveContainer>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
