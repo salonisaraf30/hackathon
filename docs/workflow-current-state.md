@@ -174,7 +174,7 @@ Example based on current test sequence:
 
 ---
 
-## 8) What is still not fully integrated
+## 8) What is still not fully integrated 
 
 - API digest route still uses Anthropic directly; independent `generateDigest(...)` module is not yet wired into `/api/generate`
 - Nia endpoint/base URL still needs correction to remove `404` and use true semantic retrieval
