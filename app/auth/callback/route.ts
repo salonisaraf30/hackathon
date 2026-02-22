@@ -38,6 +38,9 @@ export async function GET(request: Request) {
     }
   }
 
-  // If code exchange fails, redirect to error page
-  return NextResponse.redirect(`${origin}/auth/error?error=Could not authenticate`);
+  // Code exchange may fail even though the email was confirmed.
+  // Send the user to login with a friendly message instead of the error page.
+  return NextResponse.redirect(
+    `${origin}/auth/login?message=${encodeURIComponent("Email confirmed! Please sign in.")}`
+  );
 }

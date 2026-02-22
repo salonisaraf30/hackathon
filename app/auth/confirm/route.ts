@@ -20,11 +20,11 @@ export async function GET(request: NextRequest) {
       // redirect user to specified redirect URL or root of app
       redirect(next);
     } else {
-      // redirect the user to an error page with some instructions
-      redirect(`/auth/error?error=${error?.message}`);
+      // Email may already be confirmed; send to login with a friendly note
+      redirect(`/auth/login?message=${encodeURIComponent("Email confirmed! Please sign in.")}`);
     }
   }
 
-  // redirect the user to an error page with some instructions
-  redirect(`/auth/error?error=No token hash or type`);
+  // Missing params – send to login instead of error page
+  redirect(`/auth/login?message=${encodeURIComponent("Please sign in to continue.")}`);
 }

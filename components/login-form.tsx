@@ -34,6 +34,8 @@ export function LoginForm({
     }
   };
 
+  const successMessage = searchParams.get("message");
+
   useEffect(() => {
     const prefillEmail = searchParams.get("email");
     if (prefillEmail) setEmail(prefillEmail);
@@ -69,56 +71,52 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <div className="rounded-lg p-8" style={{ backgroundColor: "#0D0D0D", border: "1px solid #00FF41" }}>
         <div className="mb-6">
-          <h1 className="text-2xl text-[#00FF41] mb-1" style={SM}>SIGN IN</h1>
-          <p className="text-[13px] text-[#888888]" style={IBM}>Enter your credentials to access CompetitorPulse</p>
+          <h1 className="text-3xl text-[#00FF41] mb-2" style={SM}>SIGN IN</h1>
+          <p className="text-[15px] text-[#888888]" style={IBM}>Enter your credentials to access CompetitorPulse</p>
         </div>
+        {successMessage && (
+          <div className="mb-4 rounded px-3 py-2 text-[15px] text-[#00FF41]" style={{ border: "1px solid #00FF41", backgroundColor: "rgba(0,255,65,0.08)", ...IBM }}>
+            {successMessage}
+          </div>
+        )}
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="text-[12px] text-[#888888] block mb-1" style={IBM}>Email</label>
+            <label className="text-[14px] text-[#888888] block mb-1.5" style={IBM}>Email</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="operator@competitorpulse.io"
-              className="terminal-input w-full px-3 py-2.5 rounded text-[13px]"
+              className="terminal-input w-full px-4 py-3 rounded text-[15px]"
               style={IBM}
             />
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-[12px] text-[#888888]" style={IBM}>Password</label>
-              <Link href="/auth/forgot-password" className="text-[11px] text-[#00FFFF] hover:underline" style={SM}>FORGOT?</Link>
+              <label className="text-[14px] text-[#888888]" style={IBM}>Password</label>
+              <Link href="/auth/forgot-password" className="text-[13px] text-[#00FFFF] hover:underline" style={SM}>FORGOT?</Link>
             </div>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="terminal-input w-full px-3 py-2.5 rounded text-[13px]"
+              className="terminal-input w-full px-4 py-3 rounded text-[15px]"
               style={IBM}
             />
           </div>
-          {error && <p className="text-[12px] text-red-400" style={IBM}>{error}</p>}
+          {error && <p className="text-[14px] text-red-400" style={IBM}>{error}</p>}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2.5 rounded text-[13px] transition-colors disabled:opacity-50"
+            className="w-full py-3 rounded text-[15px] transition-colors disabled:opacity-50"
             style={{ backgroundColor: "#00FF41", color: "#000", ...SM }}
           >
             {isLoading ? "AUTHENTICATING..." : "SIGN IN →"}
           </button>
-          <button
-            type="button"
-            onClick={handleGoogleLogin}
-            disabled={isLoading}
-            className="w-full py-2.5 rounded text-[13px] transition-colors disabled:opacity-50"
-            style={{ border: "1px solid #888888", color: "#888888", backgroundColor: "transparent", ...SM }}
-          >
-            SIGN IN WITH GOOGLE
-          </button>
         </form>
-        <p className="text-center text-[12px] text-[#888888] mt-5" style={IBM}>
+        <p className="text-center text-[14px] text-[#888888] mt-5" style={IBM}>
           Don&apos;t have an account?{" "}
           <Link href="/auth/sign-up" className="text-[#FF00FF] hover:underline" style={SM}>SIGN UP</Link>
         </p>

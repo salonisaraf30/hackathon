@@ -72,49 +72,49 @@ export function SignUpForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <div className="rounded-lg p-8" style={{ backgroundColor: "#0D0D0D", border: "1px solid #FF00FF" }}>
         <div className="mb-6">
-          <h1 className="text-2xl text-[#FF00FF] mb-1" style={SM}>SIGN UP</h1>
-          <p className="text-[13px] text-[#888888]" style={IBM}>Create a new CompetitorPulse account</p>
+          <h1 className="text-3xl text-[#FF00FF] mb-2" style={SM}>SIGN UP</h1>
+          <p className="text-[15px] text-[#888888]" style={IBM}>Create a new CompetitorPulse account</p>
         </div>
         <form onSubmit={handleSignUp} className="space-y-5">
           <div>
-            <label className="text-[12px] text-[#888888] block mb-1" style={IBM}>Email</label>
+            <label className="text-[14px] text-[#888888] block mb-1.5" style={IBM}>Email</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="operator@competitorpulse.io"
-              className="terminal-input w-full px-3 py-2.5 rounded text-[13px]"
+              className="terminal-input w-full px-4 py-3 rounded text-[15px]"
               style={IBM}
             />
           </div>
           <div>
-            <label className="text-[12px] text-[#888888] block mb-1" style={IBM}>Password</label>
+            <label className="text-[14px] text-[#888888] block mb-1.5" style={IBM}>Password</label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="terminal-input w-full px-3 py-2.5 rounded text-[13px]"
+              className="terminal-input w-full px-4 py-3 rounded text-[15px]"
               style={IBM}
             />
           </div>
           <div>
-            <label className="text-[12px] text-[#888888] block mb-1" style={IBM}>Repeat Password</label>
+            <label className="text-[14px] text-[#888888] block mb-1.5" style={IBM}>Repeat Password</label>
             <input
               type="password"
               required
               value={repeatPassword}
               onChange={(e) => setRepeatPassword(e.target.value)}
-              className="terminal-input w-full px-3 py-2.5 rounded text-[13px]"
+              className="terminal-input w-full px-4 py-3 rounded text-[15px]"
               style={IBM}
             />
           </div>
-          {error && <p className="text-[12px] text-red-400" style={IBM}>{error}</p>}
+          {error && <p className="text-[14px] text-red-400" style={IBM}>{error}</p>}
           {showLoginShortcut && (
             <button
               type="button"
-              className="w-full py-2.5 rounded text-[13px] transition-colors"
+              className="w-full py-3 rounded text-[15px] transition-colors"
               style={{ border: "1px solid #888888", color: "#888888", backgroundColor: "transparent", ...SM }}
               onClick={() => router.push(`/auth/login?email=${encodeURIComponent(email)}`)}
             >
@@ -124,13 +124,13 @@ export function SignUpForm({
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2.5 rounded text-[13px] transition-colors disabled:opacity-50"
+            className="w-full py-3 rounded text-[15px] transition-colors disabled:opacity-50"
             style={{ backgroundColor: "#FF00FF", color: "#000", ...SM }}
           >
             {isLoading ? "CREATING ACCOUNT..." : "SIGN UP →"}
           </button>
         </form>
-        <p className="text-center text-[12px] text-[#888888] mt-5" style={IBM}>
+        <p className="text-center text-[14px] text-[#888888] mt-5" style={IBM}>
           Already have an account?{" "}
           <Link href="/auth/login" className="text-[#00FF41] hover:underline" style={SM}>LOGIN</Link>
         </p>
