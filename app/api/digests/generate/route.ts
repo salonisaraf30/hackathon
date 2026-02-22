@@ -1,91 +1,45 @@
-import { NextResponse } from "next/server";
+// app/api/digests/generate/route.ts
 
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { generateDigest } from "@/lib/intelligence/digest-generator";
-import type { Json } from "@/lib/supabase/types";
+import { NextRequest, NextResponse } from 'next/server';
+import { randomUUID } from 'node:crypto';
+import { createClient } from '@/lib/supabase/server';
+import { generateDigest } from '@/lib/intelligence/digest-generator';
+import { withTraceContext } from '@/lib/intelligence/trace-context';
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   const supabase = await createClient();
-  const admin = createAdminClient();
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
-    const digestContent = await generateDigest(user.id);
-
-    const now = new Date();
-    const oneWeekAgo = new Date(now);
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
-    const { data: digestRow, error: digestError } = await admin
-      .from("digests")
-      .insert({
-        user_id: user.id,
-        title: digestContent.title,
-        executive_summary: digestContent.executive_summary,
-        strategic_insights: digestContent as unknown as Json,
-        period_start: oneWeekAgo.toISOString(),
-        period_end: now.toISOString(),
-      })
-      .select()
-      .single();
-
-    if (digestError) {
-      return NextResponse.json({ error: digestError.message }, { status: 500 });
-    }
-
-    const { data: competitors } = await admin
-      .from("competitors")
-      .select("id")
-      .eq("user_id", user.id);
-
-    const competitorIds = (competitors ?? []).map((item) => item.id);
-
-    if (competitorIds.length > 0) {
-      const { data: recentSignals } = await admin
-        .from("signals")
-        .select("id")
-        .in("competitor_id", competitorIds)
-        .gte("detected_at", oneWeekAgo.toISOString())
-        .order("importance_score", { ascending: false })
-        .limit(50);
-
-      const digestSignalLinks = (recentSignals ?? []).map((signal) => ({
-        digest_id: digestRow.id,
-        signal_id: signal.id,
-      }));
-
-      if (digestSignalLinks.length > 0) {
-        const { error: linkError } = await admin
-          .from("digest_signals")
-          .insert(digestSignalLinks);
-
-        if (linkError) {
-          console.error("Failed to link digest signals:", linkError);
-        }
-      }
-    }
+    const requestId = req.headers.get('x-request-id') || randomUUID();
+    const { digestId, trace } = await withTraceContext(
+      { requestId, userId: user.id, route: '/api/digests/generate' },
+      () => generateDigest(user.id)
+    );
 
     return NextResponse.json({
-      digest: {
-        ...digestRow,
-        parsed_insights: digestContent,
-      },
-      meta: {
-        model: "nvidia/llama-3.1-nemotron-70b-instruct",
-        generated_via: "nemotron",
-      },
+      success: true,
+      request_id: requestId,
+      digest_id: digestId,
+      quality_grade: trace.final_digest.quality_grade,
+      insights_count: trace.final_digest.insights.length,
+      scenarios_count: trace.final_digest.scenarios.scenarios.length,
+      // Send the pipeline trace for the UI to animate
+      pipeline_trace: {
+        timestamps: trace.timestamps,
+        stages_completed: 5,
+        token_usage: trace.token_usage,
+      }
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Digest generation failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error('[Digest Generation Error]', error);
+    return NextResponse.json(
+      { error: (error as Error).message },
+      { status: 500 }
+    );
   }
 }

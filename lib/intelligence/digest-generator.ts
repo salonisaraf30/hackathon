@@ -1,162 +1,181 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+// lib/intelligence/digest-generator.ts
+// This replaces your old single-prompt digest generator
 
-import {
-	retrieveRelevantSignals,
-	retrieveRelevantSignalsFallback,
-} from "./nia-client";
-import { callNemotron, type NemotronResponse } from "./nemotron-client";
+import { createClient } from '@/lib/supabase/server';
+import { Json } from '@/lib/supabase/types';
+import { runPipeline, PipelineTrace } from './pipeline';
+import { RawSignal } from './agents/signal-classifier';
+import { UserProduct } from './agents/competitive-strategist';
 
-type ProductRow = {
-	name: string;
-	positioning: string | null;
-	target_market: string | null;
-	key_features: string[] | null;
-	description: string | null;
-};
+export async function generateDigest(userId: string): Promise<{
+  digestId: string;
+  trace: PipelineTrace;
+}> {
+  const supabase = await createClient();
+  // 1. Fetch user's product info
+  const { data: product } = await supabase
+    .from('user_products')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
 
-type CompetitorRow = {
-	id: string;
-	name: string;
-};
+  if (!product) throw new Error('No product found for user');
 
-type SignalLike = {
-	competitor_id?: string;
-	signal_type?: string;
-	title?: string;
-	summary?: string;
-	detected_at?: string;
-	competitors?: {
-		name?: string;
-	} | null;
-};
+  const userProduct: UserProduct = {
+    name: product.name,
+    positioning: product.positioning || '',
+    target_market: product.target_market || '',
+    key_features: product.key_features || [],
+    description: product.description || '',
+  };
 
-export async function generateDigest(
-	userId: string,
-): Promise<NemotronResponse & { title: string }> {
-	const supabase = createAdminClient();
+  // 2. Fetch recent signals (last 7 days)
+  const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-	const { data: product } = await supabase
-		.from("user_products")
-		.select("*")
-		.eq("user_id", userId)
-		.limit(1)
-		.maybeSingle<ProductRow>();
+  const { data: competitorRows } = await supabase
+    .from('competitors')
+    .select('id')
+    .eq('user_id', userId);
 
-	if (!product) {
-		throw new Error("User has no product info. Complete onboarding first.");
-	}
+  const competitorIds = (competitorRows ?? []).map((c: { id: string }) => c.id);
 
-	const { data: competitors } = await supabase
-		.from("competitors")
-		.select("id, name")
-		.eq("user_id", userId)
-		.returns<CompetitorRow[]>();
+  const { data: signals } = await supabase
+    .from('signals')
+    .select(`
+      id,
+      competitor_id,
+      source,
+      signal_type,
+      title,
+      summary,
+      raw_content,
+      detected_at,
+      competitors!inner(name)
+    `)
+    .gte('detected_at', oneWeekAgo)
+    .in('competitor_id', competitorIds);
 
-	if (!competitors?.length) {
-		throw new Error("No competitors to analyze.");
-	}
+  if (!signals || signals.length === 0) {
+    throw new Error('No signals found in the last 7 days');
+  }
 
-	const competitorIds = competitors.map((competitor) => competitor.id);
-	const competitorNameMap = Object.fromEntries(
-		competitors.map((competitor) => [competitor.id, competitor.name]),
-	);
+  // 3. Transform to RawSignal format
+  const typedSignals = (signals ?? []) as Array<{
+    id: string;
+    competitor_id: string;
+    source: string;
+    signal_type: string;
+    title: string;
+    summary: string | null;
+    raw_content: string | null;
+    detected_at: string;
+    competitors?: { name?: string } | { name?: string }[] | null;
+  }>;
 
-	let signals: SignalLike[];
-	try {
-		const retrieved = await retrieveRelevantSignals(
-			`competitive intelligence ${product.name} ${product.target_market ?? ""}`,
-			competitorIds,
-		);
-		signals = retrieved as SignalLike[];
-	} catch {
-		console.warn("Nia retrieval failed, falling back to Supabase");
-		signals = (await retrieveRelevantSignalsFallback(competitorIds, 7)) as SignalLike[];
-	}
+  const rawSignals: RawSignal[] = typedSignals.map((s) => ({
+    id: s.id,
+    competitor_id: s.competitor_id,
+    competitor_name: (s as any).competitors?.name || 'Unknown',
+    source: s.source,
+    signal_type: s.signal_type,
+    title: s.title,
+    summary: s.summary || '',
+    raw_content: s.raw_content || undefined,
+    detected_at: s.detected_at,
+  }));
 
-	if (!signals?.length) {
-		return {
-			title: "Weekly Intelligence Brief",
-			executive_summary:
-				"No new competitive signals detected this week. Your competitors have been quiet.",
-			insights: [],
-			strategic_outlook:
-				"Continue monitoring. Quiet periods often precede major announcements.",
-		};
-	}
+  // 4. Run the multi-agent pipeline
+  const trace = await runPipeline(rawSignals, userProduct);
 
-	const signalText = signals
-		.map((signal) => {
-			const competitorName =
-				signal.competitors?.name ||
-				(signal.competitor_id ? competitorNameMap[signal.competitor_id] : undefined) ||
-				"Competitor";
+  const strategicInsightsPayload: Json = {
+    user_context: {
+      product_name: userProduct.name,
+      positioning: userProduct.positioning,
+      target_market: userProduct.target_market,
+      key_features: userProduct.key_features,
+      description: userProduct.description || '',
+    },
+    insights: trace.final_digest.insights.map((insight) => ({
+      signal_id: insight.signal_id,
+      competitor_name: insight.competitor_name,
+      what_happened: insight.what_happened,
+      strategic_implication: insight.strategic_implication,
+      impact_on_user: insight.impact_on_user,
+      recommended_action: insight.recommended_action,
+      urgency: insight.urgency,
+      opportunity_or_threat: insight.opportunity_or_threat,
+      time_horizon: insight.time_horizon,
+      red_team_note: insight.red_team_note,
+      verification_note: insight.verification_note,
+      consistency_note: insight.consistency_note,
+      quality_score: insight.quality_score,
+    })),
+    scenarios: {
+      market_direction: trace.final_digest.scenarios.market_direction,
+      scenarios: trace.final_digest.scenarios.scenarios.map((scenario) => ({
+        competitor_name: scenario.competitor_name,
+        prediction: scenario.prediction,
+        confidence: scenario.confidence,
+        evidence: scenario.evidence,
+        timeframe: scenario.timeframe,
+        impact_if_true: scenario.impact_if_true,
+        preemptive_action: scenario.preemptive_action,
+        counter_scenario: scenario.counter_scenario,
+      })),
+      wildcards: trace.final_digest.scenarios.wildcards,
+    },
+    quality_grade: trace.final_digest.quality_grade,
+    pipeline_trace: {
+      timestamps: trace.timestamps,
+      token_usage: trace.token_usage,
+      classification_summary: trace.stages.classification.map((s) => ({
+        signal_id: s.id,
+        category: s.classification.category,
+        weight: s.classification.strategic_weight,
+      })),
+      red_team_summary: trace.stages.red_team.map((r) => ({
+        signal_id: r.signal_id,
+        verdict: r.verdict,
+      })),
+      verification_summary: trace.stages.verification.map((v) => ({
+        signal_id: v.signal_id,
+        verified: v.verified,
+        evidence_strength: v.evidence_strength,
+      })),
+      contradiction_summary: trace.stages.contradictions.map((c) => ({
+        signal_id: c.signal_id,
+        conflicts_with_signal_id: c.conflicts_with_signal_id,
+        severity: c.severity,
+      })),
+    },
+  };
 
-			return `
-[${signal.signal_type ?? "signal"}] ${competitorName} — ${signal.title ?? "Untitled signal"}
-${signal.summary ?? ""}
-Detected: ${signal.detected_at ?? "Unknown"}
-`;
-		})
-		.join("\n");
+  // 5. Store the digest in Supabase
+  const { data: digest } = await supabase
+    .from('digests')
+    .insert({
+      user_id: userId,
+      title: `Weekly Brief — ${new Date().toLocaleDateString()}`,
+      executive_summary: trace.final_digest.executive_summary,
+      strategic_insights: strategicInsightsPayload,
+      period_start: oneWeekAgo,
+      period_end: new Date().toISOString(),
+    })
+    .select()
+    .single();
 
-	const prompt = `You are a strategic competitive intelligence analyst.
+  // 6. Link signals to digest
+  if (digest) {
+    const digestSignals = rawSignals.map(s => ({
+      digest_id: digest.id,
+      signal_id: s.id,
+    }));
 
-CONTEXT — THE USER'S PRODUCT:
-Name: ${product.name}
-Positioning: ${product.positioning || "Not specified"}
-Target Market: ${product.target_market || "Not specified"}
-Key Features: ${(product.key_features || []).join(", ") || "Not specified"}
-Description: ${product.description || "Not specified"}
+    await supabase.from('digest_signals').insert(digestSignals);
+  }
 
-RECENT COMPETITIVE SIGNALS:
-${signalText}
-
-Generate a weekly competitive intelligence brief with:
-1. EXECUTIVE SUMMARY (2-3 sentences, what's the biggest story this week)
-2. KEY INSIGHTS (for each major signal or cluster of related signals):
-	 - What happened
-	 - Why it matters FOR THIS SPECIFIC USER'S PRODUCT (reference their positioning, target market, and features)
-	 - Recommended action (specific and actionable, not generic advice)
-	 - Urgency level: high, medium, or low
-3. STRATEGIC OUTLOOK (what to watch next week, 2-3 sentences)
-
-CRITICAL INSTRUCTIONS:
-- Be SPECIFIC. Reference the user's product by name. Compare directly to competitors.
-- Don't give generic advice like "monitor the situation." Give concrete next steps.
-- If a competitor is entering the user's target market, say so explicitly.
-- If a pricing change creates an opportunity, quantify it if possible.
-- The user should read this and immediately know what to DO, not just what happened.
-
-Format as JSON:
-{
-	"executive_summary": "...",
-	"insights": [
-		{
-			"competitor": "...",
-			"signal_type": "...",
-			"what_happened": "...",
-			"why_it_matters": "...",
-			"recommended_action": "...",
-			"urgency": "high|medium|low"
-		}
-	],
-	"strategic_outlook": "..."
-}`;
-
-	const result = await callNemotron(prompt);
-
-	const today = new Date();
-	const weekAgo = new Date(today);
-	weekAgo.setDate(weekAgo.getDate() - 7);
-
-	const title = `Intelligence Brief: ${weekAgo.toLocaleDateString("en-US", {
-		month: "short",
-		day: "numeric",
-	})} – ${today.toLocaleDateString("en-US", {
-		month: "short",
-		day: "numeric",
-		year: "numeric",
-	})}`;
-
-	return { title, ...result };
+  return {
+    digestId: digest?.id || '',
+    trace,
+  };
 }

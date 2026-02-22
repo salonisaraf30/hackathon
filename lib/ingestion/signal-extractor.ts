@@ -104,8 +104,22 @@ Example: [{"signal_type": "pricing_change", "title": "...", "summary": "...", "i
 
 		const textBlock = response.content.find((item) => item.type === "text");
 		const text = textBlock?.type === "text" ? textBlock.text : "";
-		const cleaned = text.replace(/```json|```/g, "").trim();
-		const parsed = JSON.parse(cleaned);
+		// Strip markdown fences and try to extract the JSON array
+		let cleaned = text.replace(/```json\s*|```/g, "").trim();
+
+		// If the response contains extra text around the JSON, extract the array
+		const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
+		if (arrayMatch) {
+			cleaned = arrayMatch[0];
+		}
+
+		let parsed: unknown;
+		try {
+			parsed = JSON.parse(cleaned);
+		} catch {
+			console.warn("Signal extractor: Claude returned non-JSON, returning []");
+			return [];
+		}
 		return sanitizeSignals(parsed);
 	} catch (error) {
 		console.error("Failed to extract signals from Claude:", error);

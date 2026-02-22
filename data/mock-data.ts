@@ -67,7 +67,7 @@ export const competitors: Competitor[] = [
     website: "notion.so",
     twitter: "@NotionHQ",
     monitoringSince: "JAN 2025",
-    color: "hsl(300,100%,50%)",
+    color: "#FF00FF",
     sparkline: [3, 5, 2, 8, 6, 9, 7],
   },
   {
@@ -84,7 +84,7 @@ export const competitors: Competitor[] = [
     website: "coda.io",
     twitter: "@caborHQ",
     monitoringSince: "FEB 2025",
-    color: "hsl(51,100%,50%)",
+    color: "#00FFFF",
     sparkline: [2, 4, 6, 3, 7, 5, 4],
   },
   {
@@ -101,18 +101,18 @@ export const competitors: Competitor[] = [
     website: "slite.com",
     twitter: "@SliteHQ",
     monitoringSince: "MAR 2025",
-    color: "hsl(120,100%,50%)",
+    color: "#00FF41",
     sparkline: [1, 3, 2, 4, 2, 3, 5],
   },
 ];
 
 export const signalTypeConfig: Record<string, { color: string; label: string; dotClass: string; borderClass: string }> = {
-  feature_update: { color: "hsl(120,100%,50%)", label: "FEATURE", dotClass: "bg-primary", borderClass: "border-primary" },
-  pricing_change: { color: "hsl(300,100%,50%)", label: "PRICING", dotClass: "bg-neon-magenta", borderClass: "border-neon-magenta" },
-  social_post: { color: "hsl(180,100%,50%)", label: "SOCIAL", dotClass: "bg-neon-cyan", borderClass: "border-neon-cyan" },
-  funding: { color: "hsl(51,100%,50%)", label: "FUNDING", dotClass: "bg-neon-gold", borderClass: "border-neon-gold" },
-  hiring: { color: "hsl(60,100%,50%)", label: "HIRING", dotClass: "bg-yellow-400", borderClass: "border-yellow-400" },
-  product_launch: { color: "hsl(0,0%,100%)", label: "LAUNCH", dotClass: "bg-foreground", borderClass: "border-foreground" },
+  feature_update: { color: "#00FF41", label: "FEATURE", dotClass: "bg-neon-green", borderClass: "border-neon-green" },
+  pricing_change: { color: "#FF00FF", label: "PRICING", dotClass: "bg-neon-magenta", borderClass: "border-neon-magenta" },
+  social_post: { color: "#00FFFF", label: "SOCIAL", dotClass: "bg-neon-cyan", borderClass: "border-neon-cyan" },
+  funding: { color: "#00FFFF", label: "FUNDING", dotClass: "bg-neon-cyan", borderClass: "border-neon-cyan" },
+  hiring: { color: "#00FFFF", label: "HIRING", dotClass: "bg-neon-cyan", borderClass: "border-neon-cyan" },
+  product_launch: { color: "#00FF41", label: "LAUNCH", dotClass: "bg-neon-green", borderClass: "border-neon-green" },
 };
 
 export const signals: Signal[] = [
@@ -201,10 +201,10 @@ export const digests: Digest[] = [
   },
 ];
 
-export const threatColors = {
-  low: { border: "border-primary", glow: "glow-green", ring: "border-primary", text: "text-primary", bg: "bg-primary" },
-  medium: { border: "border-neon-gold", glow: "glow-green", ring: "border-neon-gold", text: "text-neon-gold", bg: "bg-neon-gold" },
-  high: { border: "border-neon-magenta", glow: "glow-magenta", ring: "border-neon-magenta", text: "text-neon-magenta", bg: "bg-neon-magenta" },
+export const threatColors: Record<string, { border: string; glow: string; ring: string; text: string; bg: string; hex: string }> = {
+  low: { border: "border-neon-green", glow: "glow-green", ring: "border-neon-green", text: "text-neon-green", bg: "bg-neon-green", hex: "#00FF41" },
+  medium: { border: "border-neon-cyan", glow: "glow-cyan", ring: "border-neon-cyan", text: "text-neon-cyan", bg: "bg-neon-cyan", hex: "#00FFFF" },
+  high: { border: "border-neon-magenta", glow: "glow-magenta", ring: "border-neon-magenta", text: "text-neon-magenta", bg: "bg-neon-magenta", hex: "#FF00FF" },
 };
 
 export const radarData = [

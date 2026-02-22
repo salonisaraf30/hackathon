@@ -2,19 +2,12 @@
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+const SM = { fontFamily: "var(--font-space-mono)" };
+const IBM = { fontFamily: "var(--font-ibm-plex-mono)" };
 
 export function SignUpForm({
   className,
@@ -30,11 +23,7 @@ export function SignUpForm({
 
   const isEmailRateLimitError = (value: string) => {
     const message = value.toLowerCase();
-    return (
-      message.includes("rate limit") ||
-      message.includes("email rate") ||
-      message.includes("too many requests")
-    );
+    return message.includes("rate limit") || message.includes("email rate") || message.includes("too many requests");
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -51,21 +40,25 @@ export function SignUpForm({
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/login?email=${encodeURIComponent(email)}`,
-        },
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
       });
       if (error) throw error;
+
+      // If Supabase returned a session, user is auto-confirmed → go directly to onboarding
+      if (data.session) {
+        router.push("/onboarding");
+        return;
+      }
+
+      // Otherwise email confirmation is required
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An error occurred";
       if (isEmailRateLimitError(message)) {
-        setError(
-          "Too many sign-up emails were sent recently. If you already created this account, log in instead. Otherwise wait 60 seconds and try again."
-        );
+        setError("Too many sign-up emails were sent recently. If you already created this account, log in instead. Otherwise wait 60 seconds and try again.");
         setShowLoginShortcut(true);
       } else {
         setError(message);
@@ -77,75 +70,71 @@ export function SignUpForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Sign up</CardTitle>
-          <CardDescription>Create a new account</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSignUp}>
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                </div>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="repeat-password">Repeat Password</Label>
-                </div>
-                <Input
-                  id="repeat-password"
-                  type="password"
-                  required
-                  value={repeatPassword}
-                  onChange={(e) => setRepeatPassword(e.target.value)}
-                />
-              </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              {showLoginShortcut && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() =>
-                    router.push(`/auth/login?email=${encodeURIComponent(email)}`)
-                  }
-                >
-                  Go to Login
-                </Button>
-              )}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Creating an account..." : "Sign up"}
-              </Button>
-            </div>
-            <div className="mt-4 text-center text-sm">
-              Already have an account?{" "}
-              <Link href="/auth/login" className="underline underline-offset-4">
-                Login
-              </Link>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+      <div className="rounded-lg p-8" style={{ backgroundColor: "#0D0D0D", border: "1px solid #FF00FF" }}>
+        <div className="mb-6">
+          <h1 className="text-2xl text-[#FF00FF] mb-1" style={SM}>SIGN UP</h1>
+          <p className="text-[13px] text-[#888888]" style={IBM}>Create a new CompetitorPulse account</p>
+        </div>
+        <form onSubmit={handleSignUp} className="space-y-5">
+          <div>
+            <label className="text-[12px] text-[#888888] block mb-1" style={IBM}>Email</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="operator@competitorpulse.io"
+              className="terminal-input w-full px-3 py-2.5 rounded text-[13px]"
+              style={IBM}
+            />
+          </div>
+          <div>
+            <label className="text-[12px] text-[#888888] block mb-1" style={IBM}>Password</label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="terminal-input w-full px-3 py-2.5 rounded text-[13px]"
+              style={IBM}
+            />
+          </div>
+          <div>
+            <label className="text-[12px] text-[#888888] block mb-1" style={IBM}>Repeat Password</label>
+            <input
+              type="password"
+              required
+              value={repeatPassword}
+              onChange={(e) => setRepeatPassword(e.target.value)}
+              className="terminal-input w-full px-3 py-2.5 rounded text-[13px]"
+              style={IBM}
+            />
+          </div>
+          {error && <p className="text-[12px] text-red-400" style={IBM}>{error}</p>}
+          {showLoginShortcut && (
+            <button
+              type="button"
+              className="w-full py-2.5 rounded text-[13px] transition-colors"
+              style={{ border: "1px solid #888888", color: "#888888", backgroundColor: "transparent", ...SM }}
+              onClick={() => router.push(`/auth/login?email=${encodeURIComponent(email)}`)}
+            >
+              GO TO LOGIN
+            </button>
+          )}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-2.5 rounded text-[13px] transition-colors disabled:opacity-50"
+            style={{ backgroundColor: "#FF00FF", color: "#000", ...SM }}
+          >
+            {isLoading ? "CREATING ACCOUNT..." : "SIGN UP →"}
+          </button>
+        </form>
+        <p className="text-center text-[12px] text-[#888888] mt-5" style={IBM}>
+          Already have an account?{" "}
+          <Link href="/auth/login" className="text-[#00FF41] hover:underline" style={SM}>LOGIN</Link>
+        </p>
+      </div>
     </div>
   );
 }

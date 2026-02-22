@@ -9,7 +9,8 @@
     "monitor:websites": "tsx scripts/run-website-monitor.ts",
     "test:ingestion": "tsx scripts/test-ingestion.ts",
     "seed:demo": "tsx scripts/seed-demo-data.ts",
-    "test:digest": "tsx scripts/test-digest-generator.ts"
+    "test:digest": "tsx scripts/test-digest-generator.ts",
+    "analyze:multiagent": "tsx scripts/analyze-multiagent.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
@@ -22,6 +23,7 @@
     "@radix-ui/react-switch": "^1.2.5",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
+    "@types/three": "^0.183.1",
     "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -34,7 +36,8 @@
     "react-dom": "^19.0.0",
     "recharts": "^2.15.4",
     "resend": "^6.9.2",
-    "tailwind-merge": "^3.3.0"
+    "tailwind-merge": "^3.3.0",
+    "three": "^0.183.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

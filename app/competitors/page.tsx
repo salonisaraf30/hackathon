@@ -2,21 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
-
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Plus, X } from "lucide-react";
 import { signalTypeConfig, threatColors } from "@/data/mock-data";
 
 type ApiCompetitor = {
@@ -41,6 +27,7 @@ type UiCompetitor = {
   id: string;
   name: string;
   initials: string;
+  category: string;
   threat: "low" | "medium" | "high";
   threatScore: number;
   signals: number;
@@ -50,104 +37,80 @@ type UiCompetitor = {
   website: string;
   monitoringSince: string;
   color: string;
+  lastSignalType: string;
 };
 
-const filterOptions = ["ALL", "HIGH THREAT", "MEDIUM", "LOW"];
-const COLORS = ["hsl(300,100%,50%)", "hsl(51,100%,50%)", "hsl(120,100%,50%)", "hsl(180,100%,50%)"];
+const FILTERS = ["ALL", "CRITICAL", "MEDIUM", "LOW", "RECENT"];
+const THREAT_HEX: Record<string, string> = { high: "#FF00FF", medium: "#00FFFF", low: "#00FF41" };
 
-function formatTimeAgo(value: string | null): string {
-  if (!value) return "—";
-  const timestamp = new Date(value).getTime();
-  if (Number.isNaN(timestamp)) return "—";
-  const diffMs = Date.now() - timestamp;
-  const hours = Math.floor(diffMs / (1000 * 60 * 60));
-  if (hours < 1) return "NOW";
-  if (hours < 24) return `${hours}H AGO`;
-  return `${Math.floor(hours / 24)}D AGO`;
+function formatTimeAgo(v: string | null): string {
+  if (!v) return "—";
+  const t = new Date(v).getTime();
+  if (Number.isNaN(t)) return "—";
+  const h = Math.floor((Date.now() - t) / 3.6e6);
+  if (h < 1) return "NOW";
+  if (h < 24) return `${h}H AGO`;
+  return `${Math.floor(h / 24)}D AGO`;
+}
+function safeHost(u: string | null) {
+  if (!u) return "—";
+  try { return new URL(u).host; } catch { return u; }
 }
 
-function safeHost(url: string | null): string {
-  if (!url) return "—";
-  try {
-    return new URL(url).host;
-  } catch {
-    return url;
-  }
-}
-
-function signalLabel(type: string) {
-  return signalTypeConfig[type]?.label ?? type.toUpperCase();
-}
+const SM = { fontFamily: "var(--font-space-mono)" };
+const IBM = { fontFamily: "var(--font-ibm-plex-mono)" };
 
 export default function CompetitorsPage() {
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-
+  const [saving, setSaving] = useState(false);
   const [companyName, setCompanyName] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
-  const [twitterHandle, setTwitterHandle] = useState("");
-  const [productHuntSlug, setProductHuntSlug] = useState("");
-
   const [competitors, setCompetitors] = useState<UiCompetitor[]>([]);
   const [signals, setSignals] = useState<ApiSignal[]>([]);
-
   const router = useRouter();
 
   const loadData = useCallback(async () => {
-    const [competitorsRes, signalsRes] = await Promise.all([
+    const [cRes, sRes] = await Promise.all([
       fetch("/api/competitors"),
       fetch("/api/signals?limit=300"),
     ]);
+    const cJson = await cRes.json();
+    const sJson = await sRes.json();
+    const sRows = ((sJson.signals as ApiSignal[] | undefined) ?? []).sort(
+      (a, b) => new Date(b.detected_at ?? 0).getTime() - new Date(a.detected_at ?? 0).getTime()
+    );
+    setSignals(sRows);
 
-    const competitorsJson = await competitorsRes.json();
-    const signalsJson = await signalsRes.json();
-
-    const signalRows = ((signalsJson.signals as ApiSignal[] | undefined) ?? []).sort((a, b) => {
-      return new Date(b.detected_at ?? 0).getTime() - new Date(a.detected_at ?? 0).getTime();
-    });
-    setSignals(signalRows);
-
-    const mapped = ((competitorsJson.competitors as ApiCompetitor[] | undefined) ?? []).map((item, index) => {
-      const compSignals = signalRows.filter((signal) => signal.competitor_id === item.id);
-      const latestSignal = compSignals[0];
-      const totalSignals = compSignals.length || item.signals?.[0]?.count || 0;
-      const weeklySignals = compSignals.filter((signal) => {
-        if (!signal.detected_at) return false;
-        return Date.now() - new Date(signal.detected_at).getTime() <= 7 * 24 * 60 * 60 * 1000;
-      }).length;
-      const threatScore = Math.min(95, 25 + totalSignals * 4 + weeklySignals * 8);
-      const threat = threatScore >= 70 ? "high" : threatScore >= 45 ? "medium" : "low";
-
+    const categories = ["PRODUCTIVITY", "DOCS & COLLAB", "KNOWLEDGE BASE"];
+    const mapped = ((cJson.competitors as ApiCompetitor[] | undefined) ?? []).map((item, i) => {
+      const cs = sRows.filter((s) => s.competitor_id === item.id);
+      const latest = cs[0];
+      const total = cs.length || item.signals?.[0]?.count || 0;
+      const weekly = cs.filter((s) => s.detected_at && Date.now() - new Date(s.detected_at).getTime() <= 7 * 24 * 3.6e6).length;
+      const score = Math.min(95, 25 + total * 4 + weekly * 8);
+      const threat = score >= 70 ? "high" : score >= 45 ? "medium" : "low";
       return {
-        id: item.id,
-        name: item.name,
-        initials: item.name.slice(0, 2).toUpperCase(),
-        threat,
-        threatScore,
-        signals: totalSignals,
-        signalsThisWeek: weeklySignals,
-        lastActive: formatTimeAgo(latestSignal?.detected_at ?? null),
-        biggestMove: latestSignal?.title ?? "No major move detected",
+        id: item.id, name: item.name, initials: item.name.slice(0, 2).toUpperCase(),
+        category: categories[i % 3], threat, threatScore: score,
+        signals: total, signalsThisWeek: weekly,
+        lastActive: formatTimeAgo(latest?.detected_at ?? null),
+        biggestMove: latest?.title ?? "No major move detected",
         website: safeHost(item.website_url),
-        monitoringSince: item.created_at
-          ? new Date(item.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" }).toUpperCase()
-          : "—",
-        color: COLORS[index % COLORS.length],
+        monitoringSince: item.created_at ? new Date(item.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" }).toUpperCase() : "—",
+        color: THREAT_HEX[threat],
+        lastSignalType: latest ? (signalTypeConfig[latest.signal_type]?.label ?? latest.signal_type) : "—",
       } as UiCompetitor;
     });
-
     setCompetitors(mapped);
   }, []);
 
-  useEffect(() => {
-    void loadData();
-  }, [loadData]);
+  useEffect(() => { void loadData(); }, [loadData]);
 
   const filtered = useMemo(() => {
     return competitors.filter((c) => {
-      if (activeFilter === "HIGH THREAT" && c.threat !== "high") return false;
+      if (activeFilter === "CRITICAL" && c.threat !== "high") return false;
       if (activeFilter === "MEDIUM" && c.threat !== "medium") return false;
       if (activeFilter === "LOW" && c.threat !== "low") return false;
       if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false;
@@ -156,151 +119,217 @@ export default function CompetitorsPage() {
   }, [activeFilter, competitors, search]);
 
   const addCompetitor = useCallback(async () => {
-    if (!companyName.trim() || !websiteUrl.trim()) {
-      return;
-    }
-
-    setLoading(true);
+    if (!companyName.trim() || !websiteUrl.trim()) return;
+    setSaving(true);
     try {
-      const response = await fetch("/api/competitors", {
+      const res = await fetch("/api/competitors", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: companyName.trim(),
-          website_url: websiteUrl.trim(),
-          twitter_handle: twitterHandle.trim() || null,
-          product_hunt_slug: productHuntSlug.trim() || null,
-          description: "Added from competitor roster",
-        }),
+        body: JSON.stringify({ name: companyName.trim(), website_url: websiteUrl.trim(), description: "Added from competitor roster" }),
       });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to add competitor");
-      }
-
-      await fetch("/api/digests/generate", { method: "POST" });
-
-      setCompanyName("");
-      setWebsiteUrl("");
-      setTwitterHandle("");
-      setProductHuntSlug("");
-      setModalOpen(false);
+      if (!res.ok) throw new Error("Failed");
+      setCompanyName(""); setWebsiteUrl(""); setModalOpen(false);
       await loadData();
-    } finally {
-      setLoading(false);
-    }
-  }, [companyName, loadData, productHuntSlug, twitterHandle, websiteUrl]);
+    } finally { setSaving(false); }
+  }, [companyName, websiteUrl, loadData]);
 
   return (
-    <div className="scanlines min-h-screen bg-background">
-      <DashboardSidebar />
-      <main className="ml-60 p-6 space-y-6 dashboard-scroll">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="font-pixel text-sm text-primary text-glow-green mb-2">👾 COMPETITOR ROSTER</h1>
-            <p className="font-terminal text-lg text-muted-foreground">Track your rivals. Know their every move.</p>
-          </div>
-          <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-            <DialogTrigger asChild>
-              <Button className="font-pixel text-[8px] bg-neon-magenta text-background hover:bg-neon-magenta/80 glow-magenta rounded-none">＋ ADD COMPETITOR</Button>
-            </DialogTrigger>
-            <DialogContent className="bg-card border border-primary">
-              <DialogHeader>
-                <DialogTitle className="font-pixel text-xs text-primary">ADD NEW RIVAL</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div><Label className="font-terminal text-sm text-muted-foreground">Company Name</Label><Input className="terminal-input font-pixel text-xs mt-1" placeholder="Enter name..." value={companyName} onChange={(e) => setCompanyName(e.target.value)} /></div>
-                <div><Label className="font-terminal text-sm text-muted-foreground">Website URL</Label><Input className="terminal-input font-pixel text-xs mt-1" placeholder="https://..." value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} /></div>
-                <div><Label className="font-terminal text-sm text-muted-foreground">Twitter Handle (optional)</Label><Input className="terminal-input font-pixel text-xs mt-1" placeholder="@handle" value={twitterHandle} onChange={(e) => setTwitterHandle(e.target.value)} /></div>
-                <div><Label className="font-terminal text-sm text-muted-foreground">Product Hunt slug (optional)</Label><Input className="terminal-input font-pixel text-xs mt-1" placeholder="product-name" value={productHuntSlug} onChange={(e) => setProductHuntSlug(e.target.value)} /></div>
-                <div className="flex gap-3 pt-2">
-                  <Button className="font-pixel text-[8px] bg-neon-magenta text-background hover:bg-neon-magenta/80 rounded-none flex-1" onClick={() => void addCompetitor()} disabled={loading}>{loading ? "PROCESSING..." : "CONFIRM +"}</Button>
-                  <Button variant="outline" className="font-pixel text-[8px] text-muted-foreground border-muted rounded-none" onClick={() => setModalOpen(false)}>CANCEL</Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+    <div className="space-y-6">
+      {/* Header row */}
+      <div className="flex items-center gap-4">
+        <h1 className="text-lg text-[#00FF41] uppercase tracking-wider shrink-0" style={SM}>
+          COMPETITOR ROSTER
+        </h1>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="terminal-input flex-1 px-3 py-2 rounded text-[13px]"
+          style={IBM}
+          placeholder="Search competitors..."
+        />
+        <button
+          className="px-4 py-2 rounded text-black text-[13px] hover:brightness-110 transition shrink-0"
+          style={{ backgroundColor: "#FF00FF", ...SM }}
+          onClick={() => setModalOpen(true)}
+        >
+          + ADD COMPETITOR
+        </button>
+      </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {filterOptions.map((f) => (
-            <button
-              key={f}
-              onClick={() => setActiveFilter(f)}
-              className={`font-pixel text-[7px] px-3 py-2 border transition-colors ${
-                activeFilter === f
-                  ? "bg-primary text-background border-primary"
-                  : "bg-transparent text-primary border-primary hover:bg-primary/10"
-              }`}
-            >
-              {f}
-            </button>
-          ))}
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="terminal-input font-pixel text-[8px] px-3 py-2 w-64 ml-auto"
-            placeholder="█ SEARCH COMPETITORS..."
-          />
-        </div>
+      {/* Filter pills */}
+      <div className="flex flex-wrap gap-2">
+        {FILTERS.map((f) => (
+          <button
+            key={f}
+            onClick={() => setActiveFilter(f)}
+            className="px-3 py-1.5 rounded text-[12px] transition-colors"
+            style={{
+              ...SM,
+              backgroundColor: activeFilter === f ? "#00FF41" : "transparent",
+              color: activeFilter === f ? "#000" : "#00FF41",
+              border: `1px solid #00FF41`,
+            }}
+          >
+            {f}
+          </button>
+        ))}
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filtered.map((c) => {
-            const tc = threatColors[c.threat];
-            const compSignals = signals.filter((s) => s.competitor_id === c.id).slice(0, 3);
-            return (
-              <div key={c.id} className={`bg-card border ${tc.border} group hover:shadow-lg transition-all`}>
-                <div className={`${tc.bg} px-4 py-2 flex justify-between items-center`}>
-                  <span className="font-pixel text-[7px] text-background">{c.threat.toUpperCase()} THREAT</span>
-                  <span className="font-terminal text-xs text-background">LAST ACTIVE: {c.lastActive}</span>
+      {/* Cards grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {filtered.map((c) => {
+          const hex = THREAT_HEX[c.threat];
+          const compSignals = signals.filter((s) => s.competitor_id === c.id).slice(0, 3);
+          return (
+            <div key={c.id} className="rounded-lg overflow-hidden" style={{ border: `1px solid rgba(255,255,255,0.08)` }}>
+              {/* Top colored bar */}
+              <div className="h-1" style={{ backgroundColor: hex }} />
+              <div className="p-5" style={{ backgroundColor: "#0a0a0a" }}>
+                <div className="flex items-start gap-4 mb-4">
+                  <div
+                    className="w-20 h-20 rounded-lg flex items-center justify-center text-lg shrink-0"
+                    style={{ border: `2px solid ${hex}`, color: hex, ...SM }}
+                  >
+                    {c.initials}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-[14px] text-white mb-1" style={SM}>{c.name}</h3>
+                    <span className="inline-block px-2 py-0.5 rounded text-[11px] mb-1"
+                      style={{ color: "#00FFFF", backgroundColor: "rgba(0,255,255,0.2)", ...IBM }}>
+                      {c.category}
+                    </span>
+                    <p className="text-[12px] text-[#888888]" style={IBM}>{c.website}</p>
+                  </div>
                 </div>
-                <div className="p-5">
-                  <div className="flex items-start gap-4 mb-4">
-                    <Avatar className={`h-20 w-20 border-2 ${tc.ring}`} style={{ boxShadow: `0 0 15px ${c.color}40` }}>
-                      <AvatarFallback className={`bg-card ${tc.text} font-pixel text-lg`}>{c.initials}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h3 className="font-pixel text-[9px] text-foreground mb-1">{c.name}</h3>
-                      <Badge variant="outline" className="font-terminal text-[10px] text-neon-cyan border-neon-cyan rounded-none mb-1">MONITORED</Badge>
-                      <p className="font-terminal text-xs text-muted-foreground">{c.website}</p>
+
+                {/* Stats grid */}
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  {[
+                    { label: "Total Signals", val: String(c.signals), col: "#fff" },
+                    { label: "This Week", val: String(c.signalsThisWeek), col: "#fff" },
+                    { label: "Threat Score", val: `${c.threatScore}/100`, col: hex },
+                    { label: "Monitoring Since", val: c.monitoringSince, col: "#fff" },
+                    { label: "Last Signal Type", val: c.lastSignalType, col: "#fff" },
+                  ].map((s) => (
+                    <div key={s.label}>
+                      <span className="text-[11px] text-[#888888] block" style={IBM}>{s.label}</span>
+                      <span className="text-[15px]" style={{ color: s.col, ...IBM }}>{s.val}</span>
                     </div>
+                  ))}
+                </div>
+
+                {/* Threat meter */}
+                <div className="mb-4">
+                  <div className="flex justify-between text-[11px] text-[#888888] mb-1" style={IBM}>
+                    <span>THREAT METER</span>
+                    <span className="text-[13px]" style={{ color: hex, ...SM }}>{c.threatScore}%</span>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 mb-4 font-terminal text-sm">
-                    <div><p className="text-muted-foreground text-xs">TOTAL SIGNALS</p><p className="text-neon-cyan">{c.signals}</p></div>
-                    <div><p className="text-muted-foreground text-xs">THIS WEEK</p><p className="text-foreground">{c.signalsThisWeek}</p></div>
-                    <div><p className="text-muted-foreground text-xs">THREAT SCORE</p><p className={tc.text}>{c.threatScore}/100</p></div>
-                    <div><p className="text-muted-foreground text-xs">SINCE</p><p className="text-foreground">{c.monitoringSince}</p></div>
-                    <div><p className="text-muted-foreground text-xs">LAST SIGNAL</p><p className="text-foreground">{compSignals[0]?.signal_type ? signalLabel(compSignals[0].signal_type) : "—"}</p></div>
-                    <div><p className="text-muted-foreground text-xs">LATEST</p><p className="text-foreground truncate">{c.biggestMove}</p></div>
-                  </div>
-                  <div className="mb-4">
-                    <div className="flex justify-between font-terminal text-[10px] text-muted-foreground mb-1"><span>THREAT METER</span><span>{c.threatScore}%</span></div>
-                    <div className="w-full h-2 bg-muted"><div className={`h-full ${tc.bg}`} style={{ width: `${c.threatScore}%` }} /></div>
-                  </div>
-                  <div className="space-y-1 mb-4">
-                    {compSignals.map((s) => (
-                      <div key={s.id} className="flex items-center gap-2 font-terminal text-xs">
-                        <div className="w-2 h-2 rounded-full bg-neon-cyan" />
-                        <span className="text-muted-foreground truncate flex-1">{s.title}</span>
-                        <span className="text-muted-foreground shrink-0">{formatTimeAgo(s.detected_at)}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" className="font-pixel text-[7px] bg-transparent text-primary border border-primary hover:bg-primary/10 rounded-none flex-1" onClick={() => router.push(`/competitors/${c.id}`)}>VIEW INTEL →</Button>
+                  <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-full" style={{ width: `${c.threatScore}%`, backgroundColor: hex }} />
                   </div>
                 </div>
-              </div>
-            );
-          })}
 
-          <div className="bg-card border border-dashed border-primary flex flex-col items-center justify-center gap-3 cursor-pointer hover:glow-green transition-shadow min-h-[300px]" onClick={() => setModalOpen(true)}>
-            <Plus className="h-10 w-10 text-primary" />
-            <span className="font-pixel text-[9px] text-primary">ADD NEW COMPETITOR</span>
+                {/* Recent signals */}
+                <div className="space-y-1 mb-4">
+                  {compSignals.map((s) => (
+                    <div key={s.id} className="flex items-center gap-2 text-[12px]" style={IBM}>
+                      <div className="w-2 h-2 rounded-full bg-[#00FFFF]" />
+                      <span className="text-[#888888] truncate flex-1">{s.title}</span>
+                      <span className="text-[#888888] shrink-0">{formatTimeAgo(s.detected_at)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2">
+                  <button
+                    className="flex-1 px-3 py-2 rounded text-[11px] border transition-colors hover:bg-white/5"
+                    style={{ color: "#00FF41", borderColor: "#00FF41", ...SM }}
+                    onClick={() => router.push(`/competitors/${c.id}`)}
+                  >
+                    VIEW INTEL
+                  </button>
+                  <button
+                    className="px-3 py-2 rounded text-[11px] border transition-colors hover:bg-white/5"
+                    style={{ color: "#00FFFF", borderColor: "#00FFFF", ...SM }}
+                  >
+                    EDIT
+                  </button>
+                  <button
+                    className="px-3 py-2 rounded text-[11px] border transition-colors hover:bg-red-400/5"
+                    style={{ color: "rgb(248,113,113)", borderColor: "rgba(248,113,113,0.3)", ...SM }}
+                  >
+                    REMOVE
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Add card */}
+        <div
+          className="rounded-lg flex flex-col items-center justify-center gap-3 cursor-pointer hover:glow-green transition-shadow min-h-[300px]"
+          style={{ border: "1px dashed #00FF41" }}
+          onClick={() => setModalOpen(true)}
+        >
+          <Plus className="h-10 w-10 text-[#00FF41]" />
+          <span className="text-[13px] text-[#00FF41]" style={SM}>ADD NEW COMPETITOR</span>
+        </div>
+      </div>
+
+      {/* ── Add Competitor Modal ── */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="w-full max-w-md p-6 rounded-lg" style={{ backgroundColor: "#0a0a0a", border: "1px solid #00FF41" }}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-[14px] text-[#00FF41]" style={SM}>ADD NEW COMPETITOR</h2>
+              <button onClick={() => setModalOpen(false)} className="text-[#888888] hover:text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-[13px] text-[#888888] block mb-1" style={IBM}>Company Name</label>
+                <input
+                  className="terminal-input w-full px-3 py-2 rounded text-[13px]"
+                  style={IBM}
+                  placeholder="Enter name..."
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-[13px] text-[#888888] block mb-1" style={IBM}>Website URL</label>
+                <input
+                  className="terminal-input w-full px-3 py-2 rounded text-[13px]"
+                  style={IBM}
+                  placeholder="https://..."
+                  value={websiteUrl}
+                  onChange={(e) => setWebsiteUrl(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  className="flex-1 px-4 py-2 rounded text-[13px] text-black hover:brightness-110 transition"
+                  style={{ backgroundColor: "#FF00FF", ...SM }}
+                  onClick={() => void addCompetitor()}
+                  disabled={saving}
+                >
+                  {saving ? "SAVING..." : "CONFIRM"}
+                </button>
+                <button
+                  className="px-4 py-2 rounded text-[13px] text-[#888888] border border-white/20 hover:bg-white/5 transition"
+                  style={SM}
+                  onClick={() => setModalOpen(false)}
+                >
+                  CANCEL
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </main>
+      )}
     </div>
   );
 }

@@ -2,20 +2,12 @@
 
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-//import { supabase } from "@/lib/supabase/createClient";
+
+const SM = { fontFamily: "var(--font-space-mono)" };
+const IBM = { fontFamily: "var(--font-ibm-plex-mono)" };
 
 export function LoginForm({
   className,
@@ -29,51 +21,31 @@ export function LoginForm({
   const router = useRouter();
 
   const resolvePostLoginRoute = async () => {
-    const response = await fetch("/api/auth/post-login", {
-      method: "GET",
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      return "/dashboard";
+    try {
+      const response = await fetch("/api/auth/post-login", {
+        method: "GET",
+        credentials: "include",
+      });
+      if (!response.ok) return "/onboarding"; // If check fails, assume new user
+      const data = (await response.json()) as { next?: string };
+      return data.next === "/onboarding" ? "/onboarding" : "/dashboard";
+    } catch {
+      return "/onboarding"; // On network/parse error, assume new user
     }
-
-    const data = (await response.json()) as { next?: string };
-    return data.next === "/onboarding" ? "/onboarding" : "/dashboard";
   };
 
   useEffect(() => {
     const prefillEmail = searchParams.get("email");
-    if (prefillEmail) {
-      setEmail(prefillEmail);
-    }
-
-    const redirectIfSessionExists = async () => {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (session) {
-        const target = await resolvePostLoginRoute();
-        router.replace(target);
-      }
-    };
-
-    void redirectIfSessionExists();
-  }, [router, searchParams]);
+    if (prefillEmail) setEmail(prefillEmail);
+  }, [searchParams]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const supabase = createClient();
     setIsLoading(true);
     setError(null);
-
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       const target = await resolvePostLoginRoute();
       router.push(target);
@@ -87,81 +59,70 @@ export function LoginForm({
   const handleGoogleLogin = async () => {
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`
-      }
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
     if (error) setError(error.message);
   };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin}>
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <Link
-                    href="/auth/forgot-password"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </Link>
-                </div>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
-              </Button>
-              <Button 
-                type="button"
-                variant="outline"
-                className="w-full" 
-                onClick={handleGoogleLogin}
-                disabled={isLoading}
-              >
-                Sign in with Google
-              </Button>
+      <div className="rounded-lg p-8" style={{ backgroundColor: "#0D0D0D", border: "1px solid #00FF41" }}>
+        <div className="mb-6">
+          <h1 className="text-2xl text-[#00FF41] mb-1" style={SM}>SIGN IN</h1>
+          <p className="text-[13px] text-[#888888]" style={IBM}>Enter your credentials to access CompetitorPulse</p>
+        </div>
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div>
+            <label className="text-[12px] text-[#888888] block mb-1" style={IBM}>Email</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="operator@competitorpulse.io"
+              className="terminal-input w-full px-3 py-2.5 rounded text-[13px]"
+              style={IBM}
+            />
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[12px] text-[#888888]" style={IBM}>Password</label>
+              <Link href="/auth/forgot-password" className="text-[11px] text-[#00FFFF] hover:underline" style={SM}>FORGOT?</Link>
             </div>
-            <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <Link
-                href="/auth/sign-up"
-                className="underline underline-offset-4"
-              >
-                Sign up
-              </Link>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="terminal-input w-full px-3 py-2.5 rounded text-[13px]"
+              style={IBM}
+            />
+          </div>
+          {error && <p className="text-[12px] text-red-400" style={IBM}>{error}</p>}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-2.5 rounded text-[13px] transition-colors disabled:opacity-50"
+            style={{ backgroundColor: "#00FF41", color: "#000", ...SM }}
+          >
+            {isLoading ? "AUTHENTICATING..." : "SIGN IN →"}
+          </button>
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
+            className="w-full py-2.5 rounded text-[13px] transition-colors disabled:opacity-50"
+            style={{ border: "1px solid #888888", color: "#888888", backgroundColor: "transparent", ...SM }}
+          >
+            SIGN IN WITH GOOGLE
+          </button>
+        </form>
+        <p className="text-center text-[12px] text-[#888888] mt-5" style={IBM}>
+          Don&apos;t have an account?{" "}
+          <Link href="/auth/sign-up" className="text-[#FF00FF] hover:underline" style={SM}>SIGN UP</Link>
+        </p>
+      </div>
     </div>
   );
 }
