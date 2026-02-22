@@ -1,0 +1,5 @@
+{
+  "name": "ingestion-worker",
+  "private": true,
+  "version": "0.0.1"
+}
