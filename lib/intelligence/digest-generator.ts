@@ -12,7 +12,6 @@ export async function generateDigest(userId: string): Promise<{
   trace: PipelineTrace;
 }> {
   const supabase = await createClient();
-
   // 1. Fetch user's product info
   const { data: product } = await supabase
     .from('user_products')
@@ -89,6 +88,13 @@ export async function generateDigest(userId: string): Promise<{
   const trace = await runPipeline(rawSignals, userProduct);
 
   const strategicInsightsPayload: Json = {
+    user_context: {
+      product_name: userProduct.name,
+      positioning: userProduct.positioning,
+      target_market: userProduct.target_market,
+      key_features: userProduct.key_features,
+      description: userProduct.description || '',
+    },
     insights: trace.final_digest.insights.map((insight) => ({
       signal_id: insight.signal_id,
       competitor_name: insight.competitor_name,
@@ -100,6 +106,8 @@ export async function generateDigest(userId: string): Promise<{
       opportunity_or_threat: insight.opportunity_or_threat,
       time_horizon: insight.time_horizon,
       red_team_note: insight.red_team_note,
+      verification_note: insight.verification_note,
+      consistency_note: insight.consistency_note,
       quality_score: insight.quality_score,
     })),
     scenarios: {
@@ -128,6 +136,16 @@ export async function generateDigest(userId: string): Promise<{
       red_team_summary: trace.stages.red_team.map((r) => ({
         signal_id: r.signal_id,
         verdict: r.verdict,
+      })),
+      verification_summary: trace.stages.verification.map((v) => ({
+        signal_id: v.signal_id,
+        verified: v.verified,
+        evidence_strength: v.evidence_strength,
+      })),
+      contradiction_summary: trace.stages.contradictions.map((c) => ({
+        signal_id: c.signal_id,
+        conflicts_with_signal_id: c.conflicts_with_signal_id,
+        severity: c.severity,
       })),
     },
   };

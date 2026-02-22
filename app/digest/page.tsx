@@ -45,6 +45,8 @@ type DigestInsight = {
   urgency?: string;
   quality_score?: number;
   signal_id?: string;
+  verification_note?: string;
+  consistency_note?: string;
 };
 
 type DigestScenario = {
@@ -58,6 +60,13 @@ type DigestScenario = {
 
 type DigestStrategy = {
   executive_summary?: string;
+  user_context?: {
+    product_name?: string;
+    positioning?: string;
+    target_market?: string;
+    key_features?: string[];
+    description?: string;
+  };
   insights?: DigestInsight[];
   strategic_outlook?: string;
   scenarios?: {
@@ -123,6 +132,8 @@ function parseStrategy(value: unknown): DigestStrategy {
     recommended_action: typeof item.recommended_action === "string" ? item.recommended_action : undefined,
     urgency: typeof item.urgency === "string" ? item.urgency : undefined,
     quality_score: typeof item.quality_score === "number" ? item.quality_score : undefined,
+    verification_note: typeof item.verification_note === "string" ? item.verification_note : undefined,
+    consistency_note: typeof item.consistency_note === "string" ? item.consistency_note : undefined,
   }));
 
   const scenarios = (raw.scenarios && typeof raw.scenarios === "object")
@@ -161,6 +172,9 @@ function parseStrategy(value: unknown): DigestStrategy {
 
   return {
     executive_summary: typeof raw.executive_summary === "string" ? raw.executive_summary : undefined,
+    user_context: (raw.user_context && typeof raw.user_context === "object")
+      ? raw.user_context as DigestStrategy["user_context"]
+      : undefined,
     insights: normalizedInsights,
     scenarios,
     strategic_outlook:
@@ -351,6 +365,18 @@ export default function DigestPage() {
               </div>
             </div>
 
+            {strategy.user_context && (
+              <div className="bg-background border border-neon-cyan/50 p-4 space-y-2">
+                <h3 className="font-pixel text-[8px] text-neon-cyan">USER CONTEXT</h3>
+                <div className="font-terminal text-xs space-y-1">
+                  <p><span className="text-foreground font-bold">PRODUCT: </span><span className="text-muted-foreground">{strategy.user_context.product_name ?? "—"}</span></p>
+                  <p><span className="text-neon-cyan font-bold">POSITIONING: </span><span className="text-muted-foreground">{strategy.user_context.positioning ?? "—"}</span></p>
+                  <p><span className="text-neon-cyan font-bold">TARGET MARKET: </span><span className="text-muted-foreground">{strategy.user_context.target_market ?? "—"}</span></p>
+                  <p><span className="text-neon-cyan font-bold">KEY FEATURES: </span><span className="text-muted-foreground">{strategy.user_context.key_features?.join(", ") || "—"}</span></p>
+                </div>
+              </div>
+            )}
+
             {insights.length > 0 && (
               <div className="space-y-4">
                 <h3 className="font-pixel text-[8px] text-neon-magenta">KEY INSIGHTS</h3>
@@ -363,12 +389,24 @@ export default function DigestPage() {
                         <div className="flex items-center gap-2">
                           <span className="font-pixel text-[8px] text-foreground">{insight.competitor ?? "COMPETITOR"}</span>
                           <Badge variant="outline" className="font-terminal text-[9px] text-neon-cyan border-neon-cyan rounded-none">{signalConfig(resolvedSignalType).label}</Badge>
+                          {insight.verification_note && (
+                            <Badge variant="outline" className="font-terminal text-[9px] text-neon-gold border-neon-gold rounded-none">EVIDENCE FLAG</Badge>
+                          )}
+                          {insight.consistency_note && (
+                            <Badge variant="outline" className="font-terminal text-[9px] text-neon-magenta border-neon-magenta rounded-none">CONTRADICTION</Badge>
+                          )}
                         </div>
                         <Badge variant="outline" className={`font-pixel text-[6px] rounded-none ${urgencyColors[urgencyKey] ?? urgencyColors.LOW}`}>{urgencyKey}</Badge>
                       </div>
                       <div className="font-terminal text-sm space-y-2">
                         <p><span className="text-foreground font-bold">WHAT HAPPENED: </span><span className="text-muted-foreground">{insight.what_happened ?? "—"}</span></p>
                         <p><span className="text-neon-cyan font-bold">WHY IT MATTERS: </span><span className="text-muted-foreground">{insight.why_it_matters ?? "—"}</span></p>
+                        {insight.verification_note && (
+                          <p><span className="text-neon-gold font-bold">EVIDENCE CHECK: </span><span className="text-muted-foreground">{insight.verification_note}</span></p>
+                        )}
+                        {insight.consistency_note && (
+                          <p><span className="text-neon-magenta font-bold">CONSISTENCY CHECK: </span><span className="text-muted-foreground">{insight.consistency_note}</span></p>
+                        )}
                         <div className="flex items-start gap-2">
                           <Checkbox checked={checkedActions[`${i}`] || false} onCheckedChange={(v) => setCheckedActions((p) => ({ ...p, [`${i}`]: !!v }))} className="mt-1 border-primary data-[state=checked]:bg-primary" />
                           <p><span className="text-neon-gold font-bold">ACTION: </span><span className="text-muted-foreground">{insight.recommended_action ?? "—"}</span></p>

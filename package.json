@@ -9,7 +9,8 @@
     "monitor:websites": "tsx scripts/run-website-monitor.ts",
     "test:ingestion": "tsx scripts/test-ingestion.ts",
     "seed:demo": "tsx scripts/seed-demo-data.ts",
-    "test:digest": "tsx scripts/test-digest-generator.ts"
+    "test:digest": "tsx scripts/test-digest-generator.ts",
+    "analyze:multiagent": "tsx scripts/analyze-multiagent.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

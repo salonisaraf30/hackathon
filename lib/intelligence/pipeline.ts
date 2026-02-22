@@ -5,6 +5,8 @@ import { generateStrategicInsights, StrategicInsight, UserProduct } from './agen
 import { redTeamInsights, RedTeamChallenge } from './agents/red-team';
 import { predictScenarios, ScenarioPrediction } from './agents/scenario-predictor';
 import { judgeQuality, QualityReport } from './agents/quality-judge';
+import { verifyInsights, VerificationResult } from './agents/signal-verifier';
+import { detectInsightContradictions, InsightContradiction } from './agents/contradiction-detector';
 import { getSessionUsage, resetSessionUsage } from './nemotron-client';
 
 // The full pipeline trace — this is what you display in the UI
@@ -16,6 +18,8 @@ export interface PipelineTrace {
     strategized: string;
     red_teamed: string;
     scenarios_generated: string;
+    verified: string;
+    contradictions_checked: string;
     quality_judged: string;
     completed: string;
   };
@@ -26,6 +30,8 @@ export interface PipelineTrace {
     strategy: StrategicInsight[];
     red_team: RedTeamChallenge[];
     scenarios: ScenarioPrediction;
+    verification: VerificationResult[];
+    contradictions: InsightContradiction[];
     quality: QualityReport;
   };
 
@@ -34,6 +40,8 @@ export interface PipelineTrace {
     executive_summary: string;
     insights: Array<StrategicInsight & {
       red_team_note?: string;
+      verification_note?: string;
+      consistency_note?: string;
       quality_score: number;
     }>;
     scenarios: ScenarioPrediction;
@@ -64,15 +72,26 @@ export async function runPipeline(
   const insights = await generateStrategicInsights(classifiedSignals, userProduct);
   timestamps.strategized = new Date().toISOString();
 
-  // ─── Stage 3: Red Team Challenge ───
-  console.log('[Pipeline] Stage 3: Red teaming insights...');
-  const challenges = await redTeamInsights(insights, userProduct);
-  timestamps.red_teamed = new Date().toISOString();
-
-  // ─── Stage 4: Scenario Prediction ───
-  console.log('[Pipeline] Stage 4: Predicting scenarios...');
-  const scenarios = await predictScenarios(classifiedSignals, userProduct);
-  timestamps.scenarios_generated = new Date().toISOString();
+  // ─── Stage 3-6: Parallel specialist passes ───
+  console.log('[Pipeline] Stage 3-6: Running specialist agents in parallel...');
+  const [challenges, scenarios, verification, contradictions] = await Promise.all([
+    redTeamInsights(insights, userProduct).then((result) => {
+      timestamps.red_teamed = new Date().toISOString();
+      return result;
+    }),
+    predictScenarios(classifiedSignals, userProduct).then((result) => {
+      timestamps.scenarios_generated = new Date().toISOString();
+      return result;
+    }),
+    verifyInsights(insights, classifiedSignals).then((result) => {
+      timestamps.verified = new Date().toISOString();
+      return result;
+    }),
+    detectInsightContradictions(insights).then((result) => {
+      timestamps.contradictions_checked = new Date().toISOString();
+      return result;
+    }),
+  ]);
 
   // ─── Stage 5: Quality Judge ───
   console.log('[Pipeline] Stage 5: Judging quality...');
@@ -88,18 +107,29 @@ export async function runPipeline(
     .map(insight => {
       const score = qualityScores.find(s => s.signal_id === insight.signal_id);
       const challenge = challenges.find(c => c.signal_id === insight.signal_id);
+      const verificationResult = verification.find(v => v.signal_id === insight.signal_id);
+      const relatedContradictions = contradictions.filter(
+        (item) => item.signal_id === insight.signal_id || item.conflicts_with_signal_id === insight.signal_id
+      );
 
       if (!score || !score.include_in_digest) return null;
+      if (verificationResult && !verificationResult.verified && verificationResult.evidence_strength < 0.4) return null;
+
+      const contradictionPenalty = relatedContradictions.some((item) => item.severity === 'high') ? 1 : 0;
 
       return {
         ...insight,
         red_team_note: challenge?.verdict !== 'upheld' ? challenge?.challenge : undefined,
-        quality_score: score.overall_score,
+        verification_note: verificationResult?.verified ? undefined : verificationResult?.evidence_note,
+        consistency_note: relatedContradictions[0]?.explanation,
+        quality_score: Math.max(1, score.overall_score - contradictionPenalty),
       };
     })
     .filter(Boolean)
     .sort((a, b) => b!.quality_score - a!.quality_score) as Array<StrategicInsight & {
       red_team_note?: string;
+      verification_note?: string;
+      consistency_note?: string;
       quality_score: number;
     }>;
 
@@ -112,6 +142,8 @@ export async function runPipeline(
       strategy: insights,
       red_team: challenges,
       scenarios,
+      verification,
+      contradictions,
       quality,
     },
     final_digest: {

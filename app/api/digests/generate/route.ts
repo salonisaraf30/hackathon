@@ -1,8 +1,10 @@
 // app/api/digests/generate/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
+import { randomUUID } from 'node:crypto';
 import { createClient } from '@/lib/supabase/server';
 import { generateDigest } from '@/lib/intelligence/digest-generator';
+import { withTraceContext } from '@/lib/intelligence/trace-context';
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -13,10 +15,15 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { digestId, trace } = await generateDigest(user.id);
+    const requestId = req.headers.get('x-request-id') || randomUUID();
+    const { digestId, trace } = await withTraceContext(
+      { requestId, userId: user.id, route: '/api/digests/generate' },
+      () => generateDigest(user.id)
+    );
 
     return NextResponse.json({
       success: true,
+      request_id: requestId,
       digest_id: digestId,
       quality_grade: trace.final_digest.quality_grade,
       insights_count: trace.final_digest.insights.length,
