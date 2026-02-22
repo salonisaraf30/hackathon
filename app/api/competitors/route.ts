@@ -3,6 +3,8 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { monitorWebsite } from "@/lib/ingestion/website-monitor";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // GET /api/competitors — List all competitors for the authenticated user
 export async function GET() {
@@ -81,14 +83,29 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Trigger initial scrape in the background (don't await — let it run async)
-  // This calls the ingest endpoint for just this competitor
-  const baseUrl = request.nextUrl.origin;
-  fetch(`${baseUrl}/api/ingest`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ competitor_id: competitor.id }),
-  }).catch((err) => console.error("Background scrape failed:", err));
+  const admin = createAdminClient();
+  let initialSignalsCount = 0;
 
-  return NextResponse.json({ competitor }, { status: 201 });
+  try {
+    if (competitor.website_url) {
+      const initialSignals = await monitorWebsite(
+        competitor.id,
+        competitor.website_url,
+        admin
+      );
+      initialSignalsCount = initialSignals.length;
+
+      await admin
+        .from("competitors")
+        .update({ last_scraped_at: new Date().toISOString() })
+        .eq("id", competitor.id);
+    }
+  } catch (scrapeError) {
+    console.error("Initial monitorWebsite scrape failed:", scrapeError);
+  }
+
+  return NextResponse.json(
+    { competitor, initial_signals_found: initialSignalsCount },
+    { status: 201 }
+  );
 }

@@ -76,7 +76,13 @@ export async function retrieveRelevantSignals(
 		});
 
 		if (!response.ok) {
-			console.error("Nia search failed with status", response.status);
+			if (response.status === 422 || response.status === 404) {
+				console.warn(
+					`Nia search unavailable (${response.status}); using Supabase fallback.`,
+				);
+			} else {
+				console.error("Nia search failed with status", response.status);
+			}
 			return retrieveRelevantSignalsFallback(competitorIds, 7);
 		}
 

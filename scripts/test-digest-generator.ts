@@ -30,7 +30,7 @@ async function resolveUserId(preferredUserId?: string): Promise<string> {
   return userId;
 }
 
-async function seedProduct(userId: string) {
+async function ensureUserHasProduct(userId: string) {
   const supabase = createAdminClient();
 
   const { data: existing, error: fetchError } = await supabase
@@ -44,31 +44,14 @@ async function seedProduct(userId: string) {
     throw new Error(`Failed to fetch user product: ${fetchError.message}`);
   }
 
-  const payload = {
-    user_id: userId,
-    name: "CompetitorPulse",
-    positioning: "AI-first competitive intelligence for PM-led SaaS teams",
-    target_market: "B2B SaaS product teams (seed to Series C)",
-    key_features: ["automated signal tracking", "weekly strategic digest", "action recommendations"],
-    description:
-      "Tracks competitor website and market signals, then generates weekly actionable intelligence briefs for product and GTM teams.",
-  };
-
-  if (existing?.id) {
-    const { error } = await supabase.from("user_products").update(payload).eq("id", existing.id);
-    if (error) {
-      throw new Error(`Failed to update user product: ${error.message}`);
-    }
-    return;
-  }
-
-  const { error } = await supabase.from("user_products").insert(payload);
-  if (error) {
-    throw new Error(`Failed to insert user product: ${error.message}`);
+  if (!existing?.id) {
+    throw new Error(
+      "No user_products row found for this user. Complete onboarding first so digest can use real Supabase data.",
+    );
   }
 }
 
-async function seedCompetitors(userId: string): Promise<CompetitorRow[]> {
+async function getCompetitors(userId: string): Promise<CompetitorRow[]> {
   const supabase = createAdminClient();
 
   const { data: existing, error: fetchError } = await supabase
@@ -81,79 +64,34 @@ async function seedCompetitors(userId: string): Promise<CompetitorRow[]> {
     throw new Error(`Failed to fetch competitors: ${fetchError.message}`);
   }
 
-  if (existing && existing.length >= 2) {
-    return existing.slice(0, 2);
+  if (!existing || existing.length === 0) {
+    throw new Error(
+      "No competitors found for this user. Add competitors in onboarding/competitors page before testing digest.",
+    );
   }
 
-  const inserts = [
-    {
-      user_id: userId,
-      name: "Notion",
-      website_url: "https://www.notion.so",
-    },
-    {
-      user_id: userId,
-      name: "Linear",
-      website_url: "https://linear.app",
-    },
-  ];
-
-  const { data: inserted, error: insertError } = await supabase
-    .from("competitors")
-    .insert(inserts)
-    .select("id, name")
-    .returns<CompetitorRow[]>();
-
-  if (insertError) {
-    throw new Error(`Failed to insert competitors: ${insertError.message}`);
-  }
-
-  return inserted ?? [];
+  return existing;
 }
 
-async function seedSignals(competitors: CompetitorRow[]) {
+async function ensureUserHasSignals(competitors: CompetitorRow[]) {
   const supabase = createAdminClient();
 
-  const now = new Date();
-  const signalRows = [
-    {
-      competitor_id: competitors[0].id,
-      source: "website",
-      signal_type: "pricing_change",
-      title: "Notion launched AI Pro plan at $30/user",
-      summary:
-        "Notion introduced a new AI Pro tier with unlimited AI actions and enterprise security controls. The announcement positions Notion toward higher-value mid-market and enterprise accounts.",
-      raw_content: "Seeded test signal",
-      importance_score: 8,
-      detected_at: now.toISOString(),
-    },
-    {
-      competitor_id: competitors[1].id,
-      source: "website",
-      signal_type: "feature_update",
-      title: "Linear added AI release notes generation",
-      summary:
-        "Linear announced AI-generated sprint and release summaries directly in the workflow. This reduces PM overhead and strengthens their automation narrative.",
-      raw_content: "Seeded test signal",
-      importance_score: 7,
-      detected_at: now.toISOString(),
-    },
-    {
-      competitor_id: competitors[1].id,
-      source: "website",
-      signal_type: "partnership",
-      title: "Linear announced cloud partnership with Anthropic",
-      summary:
-        "Linear published a partnership update focused on secure model hosting and enterprise AI reliability. This could increase buyer confidence for regulated teams.",
-      raw_content: "Seeded test signal",
-      importance_score: 6,
-      detected_at: now.toISOString(),
-    },
-  ];
+  const { count, error } = await supabase
+    .from("signals")
+    .select("id", { count: "exact", head: true })
+    .in(
+      "competitor_id",
+      competitors.map((competitor) => competitor.id),
+    );
 
-  const { error } = await supabase.from("signals").insert(signalRows);
   if (error) {
-    throw new Error(`Failed to insert signals: ${error.message}`);
+    throw new Error(`Failed to fetch signals: ${error.message}`);
+  }
+
+  if (!count || count === 0) {
+    throw new Error(
+      "No signals found for this user's competitors. Run ingestion first so digest uses real crawled Supabase data.",
+    );
   }
 }
 
@@ -162,15 +100,12 @@ async function run() {
   const userId = await resolveUserId(inputUserId);
 
   console.log(`Using user: ${userId}`);
-  await seedProduct(userId);
+  await ensureUserHasProduct(userId);
 
-  const competitors = await seedCompetitors(userId);
-  if (competitors.length < 2) {
-    throw new Error("Need at least 2 competitors for digest test.");
-  }
+  const competitors = await getCompetitors(userId);
+  await ensureUserHasSignals(competitors);
 
-  await seedSignals(competitors);
-  console.log("Seeded product + competitors + signals.");
+  console.log("Found existing Supabase product + competitors + signals.");
 
   const digest = await generateDigest(userId);
 

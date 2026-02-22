@@ -8,13 +8,19 @@ export interface IngestionResult {
   error?: string;
 }
 
-export async function runIngestion(): Promise<IngestionResult[]> {
+export async function runIngestion(userId?: string): Promise<IngestionResult[]> {
   const supabase = createAdminClient();
 
-  const { data: competitors, error } = await supabase
+  let query = supabase
     .from("competitors")
     .select("id, website_url, name")
     .not("website_url", "is", null);
+
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { data: competitors, error } = await query;
 
   if (error || !competitors) {
     console.error("Failed to fetch competitors:", error);

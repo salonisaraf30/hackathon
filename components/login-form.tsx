@@ -13,19 +13,55 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 //import { supabase } from "@/lib/supabase/createClient";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  const resolvePostLoginRoute = async () => {
+    const response = await fetch("/api/auth/post-login", {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      return "/dashboard";
+    }
+
+    const data = (await response.json()) as { next?: string };
+    return data.next === "/onboarding" ? "/onboarding" : "/dashboard";
+  };
+
+  useEffect(() => {
+    const prefillEmail = searchParams.get("email");
+    if (prefillEmail) {
+      setEmail(prefillEmail);
+    }
+
+    const redirectIfSessionExists = async () => {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session) {
+        const target = await resolvePostLoginRoute();
+        router.replace(target);
+      }
+    };
+
+    void redirectIfSessionExists();
+  }, [router, searchParams]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,8 +75,8 @@ export function LoginForm({
         password,
       });
       if (error) throw error;
-      // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push("/protected");
+      const target = await resolvePostLoginRoute();
+      router.push(target);
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {

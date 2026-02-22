@@ -51,6 +51,10 @@ export default {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
+        "neon-green": "hsl(var(--neon-green))",
+        "neon-magenta": "hsl(var(--neon-magenta))",
+        "neon-cyan": "hsl(var(--neon-cyan))",
+        "neon-gold": "hsl(var(--neon-gold))",
       },
       borderRadius: {
         lg: "var(--radius)",

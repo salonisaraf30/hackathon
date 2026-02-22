@@ -61,7 +61,7 @@ export async function monitorWebsite(
 		console.error("Failed to store website snapshot:", insertSnapshotError);
 	}
 
-	if (!lastSnapshot || lastSnapshot.content_hash === contentHash) {
+	if (lastSnapshot?.content_hash === contentHash) {
 		return [];
 	}
 
@@ -77,7 +77,7 @@ export async function monitorWebsite(
 
 	const signals = await extractSignalsFromDiff(
 		competitor?.name ?? "Unknown",
-		lastSnapshot.raw_content ?? "",
+		lastSnapshot?.raw_content ?? "",
 		textContent,
 	);
 
@@ -107,14 +107,24 @@ export async function monitorWebsite(
 
 	for (const insertedSignal of insertedSignals ?? []) {
 		try {
-			await indexSignalInNia({
+			const payload = {
 				id: insertedSignal.id,
-				competitor_id: insertedSignal.competitor_id,
+				competitor_id: insertedSignal.competitor_id ?? competitorId,
 				signal_type: insertedSignal.signal_type,
 				title: insertedSignal.title,
-				summary: insertedSignal.summary,
-				detected_at: insertedSignal.detected_at,
-				importance_score: insertedSignal.importance_score,
+				summary: insertedSignal.summary ?? "",
+				detected_at: insertedSignal.detected_at ?? new Date().toISOString(),
+				importance_score: insertedSignal.importance_score ?? 5,
+			};
+
+			await indexSignalInNia({
+				id: payload.id,
+				competitor_id: payload.competitor_id,
+				signal_type: payload.signal_type,
+				title: payload.title,
+				summary: payload.summary,
+				detected_at: payload.detected_at,
+				importance_score: payload.importance_score,
 			});
 
 			const { error: markIndexedError } = await supabase

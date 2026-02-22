@@ -115,8 +115,7 @@ function sanitizeNemotronResponse(value: unknown): NemotronResponse {
 export async function callNemotron(prompt: string): Promise<NemotronResponse> {
 	const apiKey = process.env.OPENROUTER_API_KEY;
 	if (!apiKey) {
-		console.error("OPENROUTER_API_KEY is missing.");
-		return FALLBACK_RESPONSE;
+		throw new Error("OPENROUTER_API_KEY is missing");
 	}
 
 	try {
@@ -136,19 +135,24 @@ export async function callNemotron(prompt: string): Promise<NemotronResponse> {
 		});
 
 		if (!response.ok) {
-			console.error("Nemotron request failed with status", response.status);
-			return FALLBACK_RESPONSE;
+			const errorText = await response.text();
+			throw new Error(
+				`Nemotron request failed (${response.status}): ${errorText.slice(0, 200)}`,
+			);
 		}
 
 		const data = (await response.json()) as {
 			choices?: Array<{ message?: { content?: string } }>;
 		};
 		const text = data.choices?.[0]?.message?.content ?? "";
+		if (!text.trim()) {
+			throw new Error("Nemotron returned empty content");
+		}
 		const candidate = extractFirstJsonObject(text);
 		const parsed = JSON.parse(candidate) as unknown;
 		return sanitizeNemotronResponse(parsed);
 	} catch (error) {
-		console.error("Failed to parse Nemotron response:", error);
-		return FALLBACK_RESPONSE;
+		console.error("Nemotron call failed:", error);
+		throw error instanceof Error ? error : new Error("Nemotron call failed");
 	}
 }

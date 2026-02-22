@@ -25,13 +25,24 @@ export function SignUpForm({
   const [repeatPassword, setRepeatPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showLoginShortcut, setShowLoginShortcut] = useState(false);
   const router = useRouter();
+
+  const isEmailRateLimitError = (value: string) => {
+    const message = value.toLowerCase();
+    return (
+      message.includes("rate limit") ||
+      message.includes("email rate") ||
+      message.includes("too many requests")
+    );
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     const supabase = createClient();
     setIsLoading(true);
     setError(null);
+    setShowLoginShortcut(false);
 
     if (password !== repeatPassword) {
       setError("Passwords do not match");
@@ -44,13 +55,21 @@ export function SignUpForm({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/protected`,
+          emailRedirectTo: `${window.location.origin}/auth/login?email=${encodeURIComponent(email)}`,
         },
       });
       if (error) throw error;
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      const message = error instanceof Error ? error.message : "An error occurred";
+      if (isEmailRateLimitError(message)) {
+        setError(
+          "Too many sign-up emails were sent recently. If you already created this account, log in instead. Otherwise wait 60 seconds and try again."
+        );
+        setShowLoginShortcut(true);
+      } else {
+        setError(message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -102,6 +121,18 @@ export function SignUpForm({
                 />
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
+              {showLoginShortcut && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() =>
+                    router.push(`/auth/login?email=${encodeURIComponent(email)}`)
+                  }
+                >
+                  Go to Login
+                </Button>
+              )}
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Creating an account..." : "Sign up"}
               </Button>
