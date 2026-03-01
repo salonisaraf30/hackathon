@@ -1,4 +1,4 @@
-# CompetitorPulse
+# CompetitorPulse NEW
 
 AI-powered competitive intelligence platform that monitors competitor websites, extracts strategic signals, and generates analyst-grade intelligence briefs — all automatically.
 
