@@ -6,13 +6,17 @@ import { Json } from '@/lib/supabase/types';
 import { runPipeline, PipelineTrace } from './pipeline';
 import { RawSignal } from './agents/signal-classifier';
 import { UserProduct } from './agents/competitive-strategist';
+import { ApiError } from '@/lib/utils/api-error';
 
 export async function generateDigest(userId: string): Promise<{
   digestId: string;
   trace: PipelineTrace;
+  fromCache?: boolean;
 }> {
   const supabase = await createClient();
-  // 1. Fetch user's product info
+
+  // 1. Fetch user's product info — needed to give the pipeline context
+  //    about what the user builds and who they're competing against
   const { data: product } = await supabase
     .from('user_products')
     .select('*')
@@ -30,6 +34,7 @@ export async function generateDigest(userId: string): Promise<{
   };
 
   // 2. Fetch recent signals (last 7 days)
+  //    Only signals from the user's tracked competitors are included
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
   const { data: competitorRows } = await supabase
@@ -59,7 +64,7 @@ export async function generateDigest(userId: string): Promise<{
     throw new Error('No signals found in the last 7 days');
   }
 
-  // 3. Transform to RawSignal format
+  // 3. Transform to RawSignal format expected by the pipeline agents
   const typedSignals = (signals ?? []) as Array<{
     id: string;
     competitor_id: string;
@@ -85,8 +90,34 @@ export async function generateDigest(userId: string): Promise<{
   }));
 
   // 4. Run the multi-agent pipeline
-  const trace = await runPipeline(rawSignals, userProduct);
+  //    If Nemotron fails, fall back to the most recent cached digest rather
+  //    than throwing — this keeps the weekly email cron alive even during
+  //    LLM outages. A 503 is only thrown if there is no cached digest at all.
+  let trace: PipelineTrace;
+  try {
+    trace = await runPipeline(rawSignals, userProduct);
+  } catch (pipelineError) {
+    console.error('Pipeline failed, returning cached digest', pipelineError);
 
+    // Fetch the most recent digest this user has ever generated
+    const { data: cached } = await supabase
+      .from('digests')
+      .select('*')
+      .eq('user_id', userId)
+      .order('generated_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    // Return the cached digest if available — caller receives fromCache: true
+    // so it can show a "Using last available digest" notice to the user
+    if (cached) return { digestId: cached.id, trace: {} as PipelineTrace, fromCache: true };
+
+    // No cache available — nothing we can show the user
+    throw new ApiError('Pipeline unavailable and no cached digest found', 503);
+  }
+
+  // 5. Shape the pipeline output into the strategic_insights JSONB payload
+  //    This is the structure the frontend digest view reads from
   const strategicInsightsPayload: Json = {
     user_context: {
       product_name: userProduct.name,
@@ -125,6 +156,7 @@ export async function generateDigest(userId: string): Promise<{
       wildcards: trace.final_digest.scenarios.wildcards,
     },
     quality_grade: trace.final_digest.quality_grade,
+    // Pipeline trace is stored for debugging and prompt improvement — not shown to users
     pipeline_trace: {
       timestamps: trace.timestamps,
       token_usage: trace.token_usage,
@@ -150,7 +182,7 @@ export async function generateDigest(userId: string): Promise<{
     },
   };
 
-  // 5. Store the digest in Supabase
+  // 6. Store the completed digest in Supabase
   const { data: digest } = await supabase
     .from('digests')
     .insert({
@@ -164,7 +196,8 @@ export async function generateDigest(userId: string): Promise<{
     .select()
     .single();
 
-  // 6. Link signals to digest
+  // 7. Link each signal to the digest via the join table
+  //    This powers the "signals used in this digest" view on the frontend
   if (digest) {
     const digestSignals = rawSignals.map(s => ({
       digest_id: digest.id,
