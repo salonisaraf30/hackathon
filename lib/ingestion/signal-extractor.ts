@@ -101,6 +101,7 @@ Example: [{"signal_type": "pricing_change", "title": "...", "summary": "...", "i
 				},
 			],
 		});
+		
 
 		const textBlock = response.content.find((item) => item.type === "text");
 		const text = textBlock?.type === "text" ? textBlock.text : "";

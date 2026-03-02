@@ -26,6 +26,11 @@ export function SignUpForm({
     return message.includes("rate limit") || message.includes("email rate") || message.includes("too many requests");
   };
 
+  const isAlreadyRegistered = (value: string) => {
+    const message = value.toLowerCase();
+    return message.includes("already registered") || message.includes("already been registered") || message.includes("user already exists");
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     const supabase = createClient();
@@ -57,8 +62,8 @@ export function SignUpForm({
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An error occurred";
-      if (isEmailRateLimitError(message)) {
-        setError("Too many sign-up emails were sent recently. If you already created this account, log in instead. Otherwise wait 60 seconds and try again.");
+      if (isAlreadyRegistered(message) || isEmailRateLimitError(message)) {
+        setError("This email is already registered. Please log in instead.");
         setShowLoginShortcut(true);
       } else {
         setError(message);

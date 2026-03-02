@@ -151,6 +151,9 @@ export function parseNemotronJSON<T>(content: string): T {
   }
   cleaned = cleaned.trim();
 
+  // Fix invalid JSON: Nemotron sometimes outputs +0.1 instead of 0.1
+  cleaned = cleaned.replace(/:\s*\+(\d)/g, ': $1');
+
   try {
     return JSON.parse(cleaned) as T;
   } catch (e) {
