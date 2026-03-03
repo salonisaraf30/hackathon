@@ -11,13 +11,9 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      // After exchanging the code, check if the user needs onboarding
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
-        // Check if they have a product set up → if not, send to onboarding
         try {
           const { data: product } = await supabase
             .from("user_products")
@@ -27,9 +23,19 @@ export async function GET(request: Request) {
             .maybeSingle();
 
           const destination = product?.id ? next : "/onboarding";
-          return NextResponse.redirect(`${origin}${destination}`);
+
+          // Redirect through /auth/identify so the client can call
+          // posthog.identify() before forwarding to the final destination.
+          // We pass user info as query params — nothing sensitive beyond
+          // what Supabase already exposes to the authenticated client.
+          const identifyUrl = new URL(`${origin}/auth/identify`)
+          identifyUrl.searchParams.set("next", destination)
+          identifyUrl.searchParams.set("uid", user.id)
+          identifyUrl.searchParams.set("email", user.email ?? "")
+          identifyUrl.searchParams.set("created_at", user.created_at ?? "")
+
+          return NextResponse.redirect(identifyUrl.toString())
         } catch {
-          // If query fails (table doesn't exist, etc.), send to onboarding
           return NextResponse.redirect(`${origin}/onboarding`);
         }
       }
@@ -38,8 +44,6 @@ export async function GET(request: Request) {
     }
   }
 
-  // Code exchange may fail even though the email was confirmed.
-  // Send the user to login with a friendly message instead of the error page.
   return NextResponse.redirect(
     `${origin}/auth/login?message=${encodeURIComponent("Email confirmed! Please sign in.")}`
   );
