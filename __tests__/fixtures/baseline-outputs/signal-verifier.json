@@ -1,0 +1,74 @@
+{
+  "agent_name": "signal-verifier",
+  "run_at": "2026-03-02T03:39:22.441Z",
+  "duration_ms": 16913,
+  "tokens_used": 2745,
+  "raw_output": [
+    {
+      "signal_id": "sig-009-manual",
+      "verified": true,
+      "evidence_strength": 0.9,
+      "evidence_note": "Direct report from The Information provides strong evidence for Notion's funding and strategic growth phase",
+      "missing_evidence": []
+    },
+    {
+      "signal_id": "sig-003",
+      "verified": true,
+      "evidence_strength": 0.8,
+      "evidence_note": "Notion's job postings for 15 ML engineers clearly indicate investment in AI-powered workspace solutions",
+      "missing_evidence": []
+    },
+    {
+      "signal_id": "sig-007",
+      "verified": true,
+      "evidence_strength": 0.9,
+      "evidence_note": "Official announcement from Coda and Atlassian confirms the strategic partnership and its implications",
+      "missing_evidence": []
+    },
+    {
+      "signal_id": "sig-001",
+      "verified": true,
+      "evidence_strength": 0.7,
+      "evidence_note": "Notion's product launch announcement supports the strategic implication, though user impact is somewhat inferred",
+      "missing_evidence": [
+        "Direct user feedback on Notion's AI-powered project templates"
+      ]
+    },
+    {
+      "signal_id": "sig-002",
+      "verified": true,
+      "evidence_strength": 0.6,
+      "evidence_note": "Pricing change is confirmed, but impact on TaskFlow's pricing strategy is somewhat speculative",
+      "missing_evidence": [
+        "Market research on pricing sensitivity among TaskFlow's target market"
+      ]
+    },
+    {
+      "signal_id": "sig-008",
+      "verified": true,
+      "evidence_strength": 0.7,
+      "evidence_note": "Coda's product launch announcement supports the strategic implication, though user impact is somewhat inferred",
+      "missing_evidence": [
+        "Comparison of TaskFlow's automation capabilities with Coda's AI Packs"
+      ]
+    },
+    {
+      "signal_id": "sig-005",
+      "verified": false,
+      "evidence_strength": 0.4,
+      "evidence_note": "Linear's product launch announcement is confirmed, but the strategic implication and user impact are somewhat speculative",
+      "missing_evidence": [
+        "Market feedback on Linear Insights, comparative analysis of predictive analytics in project management tools"
+      ]
+    },
+    {
+      "signal_id": "sig-004",
+      "verified": true,
+      "evidence_strength": 0.5,
+      "evidence_note": "Linear's feature update is confirmed, though the strategic implication and user impact are somewhat inferred",
+      "missing_evidence": [
+        "User feedback on Linear's GitHub Actions integration, comparative analysis of auto-triage features"
+      ]
+    }
+  ]
+}

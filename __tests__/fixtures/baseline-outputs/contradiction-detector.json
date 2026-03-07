@@ -1,0 +1,22 @@
+{
+  "agent_name": "contradiction-detector",
+  "run_at": "2026-03-02T03:39:30.898Z",
+  "duration_ms": 8455,
+  "tokens_used": 1345,
+  "raw_output": [
+    {
+      "signal_id": "sig-001",
+      "conflicts_with_signal_id": "sig-008",
+      "severity": "medium",
+      "explanation": "Both signals imply a need to highlight unique value propositions due to Notion's and Coda's AI enhancements. However, sig-001 suggests emphasizing superiority in AI sprint planning immediately, while sig-008 recommends developing a comparison guide within 4 weeks, potentially delaying the emphasis on AI sprint planning's uniqueness.",
+      "recommended_resolution": "Integrate both actions: immediately update marketing materials to emphasize AI sprint planning's superiority (sig-001) and include this in the comparison guide development (sig-008) to maintain consistency."
+    },
+    {
+      "signal_id": "sig-002",
+      "conflicts_with_signal_id": "sig-009-manual",
+      "severity": "high",
+      "explanation": "Sig-002 suggests a potential need to adjust TaskFlow's pricing strategy due to Notion's price cut, which may impact competitiveness. However, sig-009-manual implies focusing on AI feature benchmarking (high urgency) without considering potential pricing adjustments that could also impact competitiveness.",
+      "recommended_resolution": "Conduct the pricing sensitivity analysis (sig-002) concurrently with the AI feature benchmarking (sig-009-manual) to ensure a holistic competitiveness strategy."
+    }
+  ]
+}

@@ -1,0 +1,226 @@
+{
+  "agent_name": "signal-classifier",
+  "run_at": "2026-03-02T03:37:43.179Z",
+  "duration_ms": 27447,
+  "tokens_used": 2387,
+  "raw_output": [
+    {
+      "id": "sig-001",
+      "competitor_id": "notion-001",
+      "competitor_name": "Notion",
+      "source": "website",
+      "signal_type": "product_launch",
+      "title": "Notion launches AI-powered project templates",
+      "summary": "Notion announced 'Notion Projects' with AI that auto-generates project plans, timelines, and task breakdowns. Available to all Teams and Enterprise plans. Includes Gantt charts, sprint views, and automated status updates.",
+      "raw_content": "Notion Projects brings AI-powered project management to your workspace. Automatically generate project plans, break down epics into tasks, and get AI-suggested timelines based on your team's historical velocity...",
+      "detected_at": "2026-02-25T09:00:00Z",
+      "classification": {
+        "category": "offensive_move",
+        "confidence": 0.9,
+        "reasoning": "Notion's launch of AI-powered project templates indicates an aggressive push to enhance user experience and productivity, likely aiming to attract new customers and gain market share.",
+        "strategic_weight": 8,
+        "velocity": "accelerating",
+        "related_signal_ids": [
+          "sig-002",
+          "sig-003"
+        ]
+      }
+    },
+    {
+      "id": "sig-002",
+      "competitor_id": "notion-001",
+      "competitor_name": "Notion",
+      "source": "website",
+      "signal_type": "pricing_change",
+      "title": "Notion cuts Enterprise pricing by 25%",
+      "summary": "Notion reduced Enterprise plan pricing from $20/user/month to $15/user/month for annual commitments. The change applies to new customers immediately and existing customers at renewal.",
+      "raw_content": "Enterprise plan now $15/user/month (billed annually). Includes SAML SSO, advanced permissions, audit log, and priority support. Volume discounts available for organizations over 100 seats.",
+      "detected_at": "2026-02-24T14:30:00Z",
+      "classification": {
+        "category": "offensive_move",
+        "confidence": 0.8,
+        "reasoning": "The 25% price cut for Notion's Enterprise plan is a competitive move to make the product more appealing to larger organizations, potentially taking market share from competitors.",
+        "strategic_weight": 7,
+        "velocity": "accelerating",
+        "related_signal_ids": [
+          "sig-001",
+          "sig-008"
+        ]
+      }
+    },
+    {
+      "id": "sig-003",
+      "competitor_id": "notion-001",
+      "competitor_name": "Notion",
+      "source": "website",
+      "signal_type": "hiring",
+      "title": "Notion hiring 15 ML engineers for SF office",
+      "summary": "Notion careers page shows 15 open ML/AI engineering roles focused on 'next-generation workspace intelligence'. Roles mention 'autonomous task management' and 'predictive project analytics'.",
+      "raw_content": "Join our AI team to build the future of work. We're hiring ML Engineers, Research Scientists, and AI Product Managers to work on autonomous agents that help teams manage projects without manual overhead...",
+      "detected_at": "2026-02-26T11:00:00Z",
+      "classification": {
+        "category": "internal_shift",
+        "confidence": 0.85,
+        "reasoning": "Hiring 15 ML engineers suggests Notion is heavily investing in AI capabilities, indicating a strategic shift towards more intelligent workspace solutions.",
+        "strategic_weight": 9,
+        "velocity": "accelerating",
+        "related_signal_ids": [
+          "sig-001",
+          "sig-008",
+          "sig-009-manual"
+        ]
+      }
+    },
+    {
+      "id": "sig-004",
+      "competitor_id": "linear-001",
+      "competitor_name": "Linear",
+      "source": "website",
+      "signal_type": "feature_update",
+      "title": "Linear adds GitHub Actions integration with auto-triage",
+      "summary": "Linear launched native GitHub Actions integration that automatically creates issues from failed CI runs, assigns them based on code ownership, and suggests priority based on blast radius analysis.",
+      "raw_content": "New GitHub Actions integration: Failed workflows automatically create Linear issues with full context. AI assigns to the right team member based on CODEOWNERS and recent commit history. Priority suggested based on affected services.",
+      "detected_at": "2026-02-23T16:00:00Z",
+      "classification": {
+        "category": "offensive_move",
+        "confidence": 0.7,
+        "reasoning": "Linear's GitHub Actions integration with auto-triage enhances its appeal to development teams, potentially attracting new customers with this advanced feature.",
+        "strategic_weight": 5,
+        "velocity": "steady",
+        "related_signal_ids": [
+          "sig-005",
+          "sig-006"
+        ]
+      }
+    },
+    {
+      "id": "sig-005",
+      "competitor_id": "linear-001",
+      "competitor_name": "Linear",
+      "source": "website",
+      "signal_type": "product_launch",
+      "title": "Linear launches 'Linear Insights' analytics dashboard",
+      "summary": "Linear released a new analytics product called 'Linear Insights' offering cycle time analysis, bottleneck detection, and predictive delivery estimates. Premium feature at $5/user/month add-on.",
+      "raw_content": "Linear Insights: Understand your engineering organization like never before. Track cycle time, identify bottlenecks, and predict delivery dates with ML-powered estimates that learn from your team's patterns.",
+      "detected_at": "2026-02-27T10:00:00Z",
+      "classification": {
+        "category": "offensive_move",
+        "confidence": 0.75,
+        "reasoning": "Launching 'Linear Insights' with predictive analytics capabilities positions Linear for more enterprise deals, indicating an aggressive growth strategy.",
+        "strategic_weight": 6,
+        "velocity": "accelerating",
+        "related_signal_ids": [
+          "sig-004",
+          "sig-006"
+        ]
+      }
+    },
+    {
+      "id": "sig-006",
+      "competitor_id": "linear-001",
+      "competitor_name": "Linear",
+      "source": "twitter",
+      "signal_type": "social_post",
+      "title": "Linear CEO hints at 'autonomous engineering pods'",
+      "summary": "Karri Saarinen (Linear CEO) tweeted about 'the end of manual sprint planning' and teased 'autonomous engineering pods that self-organize around objectives'. Thread got 2.4k likes and significant engagement from eng leaders.",
+      "raw_content": "@karrisaarinen: 'We're building towards a future where engineering teams don't plan sprints — they set objectives and the system orchestrates the work. Announcing something big next month. 🧵'",
+      "detected_at": "2026-02-26T18:30:00Z",
+      "classification": {
+        "category": "offensive_move",
+        "confidence": 0.65,
+        "reasoning": "The CEO's hint at 'autonomous engineering pods' suggests future innovative features, which could attract more customers, though the impact is less immediate.",
+        "strategic_weight": 4,
+        "velocity": "accelerating",
+        "related_signal_ids": [
+          "sig-004",
+          "sig-005"
+        ]
+      }
+    },
+    {
+      "id": "sig-007",
+      "competitor_id": "coda-001",
+      "competitor_name": "Coda",
+      "source": "website",
+      "signal_type": "partnership",
+      "title": "Coda announces strategic partnership with Atlassian",
+      "summary": "Coda and Atlassian announced a deep integration partnership. Coda docs can now embed live Jira boards with bi-directional sync. Joint go-to-market with Atlassian sales team for enterprise deals.",
+      "raw_content": "Coda + Atlassian: The best of both worlds. Embed live Jira boards in your Coda docs with real-time sync. Edit issues directly in Coda and see updates flow back to Jira. Available for Coda Team and Enterprise plans.",
+      "detected_at": "2026-02-22T13:00:00Z",
+      "classification": {
+        "category": "ecosystem_play",
+        "confidence": 0.95,
+        "reasoning": "Coda's strategic partnership with Atlassian integrates their product deeply into a larger ecosystem, enhancing its value proposition to joint customers.",
+        "strategic_weight": 9,
+        "velocity": "steady",
+        "related_signal_ids": [
+          "sig-008"
+        ]
+      }
+    },
+    {
+      "id": "sig-008",
+      "competitor_id": "coda-001",
+      "competitor_name": "Coda",
+      "source": "website",
+      "signal_type": "feature_update",
+      "title": "Coda launches AI Packs for engineering workflows",
+      "summary": "Coda released 'AI Packs' — pre-built automation templates for engineering teams including sprint retrospective analysis, bug triage, and incident response runbooks. Powered by GPT-4 and Claude.",
+      "raw_content": "AI Packs for Engineering: Automate your most repetitive workflows. Sprint retro summarizer analyzes your completed issues and suggests process improvements. Bug triage AI categorizes incoming issues and routes to the right team.",
+      "detected_at": "2026-02-25T15:00:00Z",
+      "classification": {
+        "category": "offensive_move",
+        "confidence": 0.8,
+        "reasoning": "Launching AI Packs for engineering workflows positions Coda to capture more of the engineering team market share with advanced automation capabilities.",
+        "strategic_weight": 7,
+        "velocity": "accelerating",
+        "related_signal_ids": [
+          "sig-002",
+          "sig-003",
+          "sig-007"
+        ]
+      }
+    },
+    {
+      "id": "sig-009-manual",
+      "competitor_id": "notion-001",
+      "competitor_name": "Notion",
+      "source": "manual_research",
+      "signal_type": "funding",
+      "title": "Notion reportedly raising $200M at $15B valuation",
+      "summary": "The Information reports Notion is raising a $200M Series E at a $15B valuation, up from $10B in 2024. Sources say funds will go toward AI capabilities and enterprise sales expansion in EMEA and APAC.",
+      "raw_content": "According to three sources familiar with the matter, Notion is in late-stage negotiations for a $200M Series E that would value the company at $15B. The funding will accelerate AI development and international expansion.",
+      "detected_at": "2026-02-27T08:00:00Z",
+      "classification": {
+        "category": "internal_shift",
+        "confidence": 0.9,
+        "reasoning": "Notion's reported $200M funding round at a $15B valuation indicates significant investment in AI and enterprise expansion, signaling a strategic growth phase.",
+        "strategic_weight": 10,
+        "velocity": "accelerating",
+        "related_signal_ids": [
+          "sig-001",
+          "sig-003"
+        ]
+      }
+    },
+    {
+      "id": "sig-010-manual",
+      "competitor_id": "linear-001",
+      "competitor_name": "Linear",
+      "source": "manual_research",
+      "signal_type": "pricing_change",
+      "title": "Linear removes seat minimums for startup plan",
+      "summary": "Linear quietly removed the 5-seat minimum from their Startup plan ($8/user/month), making it accessible to 2-person teams. Previously teams under 5 had to pay for 5 seats minimum. Strategic move to capture early-stage startups.",
+      "raw_content": "Linear Startup plan pricing update: Now available for teams of any size with no minimum seat requirement. $8/user/month gets you everything in Plus, ideal for fast-moving product teams.",
+      "detected_at": "2026-02-28T09:00:00Z",
+      "classification": {
+        "category": "offensive_move",
+        "confidence": 0.7,
+        "reasoning": "Removing seat minimums for Linear's Startup plan is a competitive move to capture early-stage startups, potentially gaining market share in this segment.",
+        "strategic_weight": 3,
+        "velocity": "steady",
+        "related_signal_ids": []
+      }
+    }
+  ]
+}

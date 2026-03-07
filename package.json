@@ -10,7 +10,13 @@
     "test:ingestion": "tsx scripts/test-ingestion.ts",
     "seed:demo": "tsx scripts/seed-demo-data.ts",
     "test:digest": "tsx scripts/test-digest-generator.ts",
-    "analyze:multiagent": "tsx scripts/analyze-multiagent.ts"
+    "analyze:multiagent": "tsx scripts/analyze-multiagent.ts",
+    "test:github-monitor": "tsx scripts/test-github-monitor.ts",
+    "test:news-monitor": "tsx scripts/test-news-monitor.ts",
+    "test:jobs-monitor": "tsx scripts/test-jobs-monitor.ts",
+    "test:producthunt-monitor": "tsx scripts/test-producthunt-monitor.ts",
+    "test:techcrunch-monitor": "tsx scripts/test-techcrunch-monitor.ts"
+     
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

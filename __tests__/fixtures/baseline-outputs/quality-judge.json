@@ -1,0 +1,85 @@
+{
+  "agent_name": "quality-judge",
+  "run_at": "2026-03-02T03:39:51.823Z",
+  "duration_ms": 20922,
+  "tokens_used": 2796,
+  "raw_output": {
+    "scores": [
+      {
+        "signal_id": "0",
+        "specificity_score": 8,
+        "actionability_score": 9,
+        "evidence_score": 6,
+        "overall_score": 7.7,
+        "include_in_digest": true,
+        "revision_note": "Consider Red Team's partial challenge, nuance Notion's AI focus"
+      },
+      {
+        "signal_id": "1",
+        "specificity_score": 7,
+        "actionability_score": 8,
+        "evidence_score": 5,
+        "overall_score": 6.7,
+        "include_in_digest": true,
+        "revision_note": "Address Red Team's partial challenge, clarify Notion's project management focus"
+      },
+      {
+        "signal_id": "2",
+        "specificity_score": 6,
+        "actionability_score": 7,
+        "evidence_score": 5,
+        "overall_score": 6,
+        "include_in_digest": true,
+        "revision_note": "Emphasize TaskFlow's unique value proposition for engineering teams"
+      },
+      {
+        "signal_id": "3",
+        "specificity_score": 9,
+        "actionability_score": 9,
+        "evidence_score": 8,
+        "overall_score": 8.7,
+        "include_in_digest": true,
+        "revision_note": "None, upheld by Red Team"
+      },
+      {
+        "signal_id": "4",
+        "specificity_score": 6,
+        "actionability_score": 7,
+        "evidence_score": 5,
+        "overall_score": 6,
+        "include_in_digest": true,
+        "revision_note": "Consider TaskFlow's unique value proposition for Series A-C tech startups"
+      },
+      {
+        "signal_id": "5",
+        "specificity_score": 8,
+        "actionability_score": 9,
+        "evidence_score": 6,
+        "overall_score": 7.7,
+        "include_in_digest": true,
+        "revision_note": "Consider a more immediate response to Coda's growing focus"
+      },
+      {
+        "signal_id": "6",
+        "specificity_score": 7,
+        "actionability_score": 8,
+        "evidence_score": 5,
+        "overall_score": 6.7,
+        "include_in_digest": true,
+        "revision_note": "Differentiate between Linear's enterprise focus and TaskFlow's engineering team focus"
+      },
+      {
+        "signal_id": "7",
+        "specificity_score": 8,
+        "actionability_score": 6,
+        "evidence_score": 7,
+        "overall_score": 7,
+        "include_in_digest": true,
+        "revision_note": "None, upheld by Red Team"
+      }
+    ],
+    "executive_summary_draft": "TaskFlow faces increasing competition from Notion, Coda, and Linear, who are aggressively investing in AI capabilities and ecosystem expansions. To maintain its edge, TaskFlow must enhance its AI-powered sprint planning, deepen GitHub/GitLab integrations, and emphasize its unique value proposition for engineering teams. Immediate marketing updates and strategic partnerships are crucial to stay competitive.",
+    "digest_quality_grade": "B+",
+    "improvement_notes": "Enhance signal evidence with more direct, verifiable sources. Provide clearer differentiation between competitors' strategies and TaskFlow's unique value proposition. Consider adding a 'Competitor Landscape' section to visualize market shifts."
+  }
+}

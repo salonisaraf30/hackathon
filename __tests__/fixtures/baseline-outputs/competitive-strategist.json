@@ -1,0 +1,96 @@
+{
+  "agent_name": "competitive-strategist",
+  "run_at": "2026-03-02T03:38:18.746Z",
+  "duration_ms": 35564,
+  "tokens_used": 3172,
+  "raw_output": [
+    {
+      "signal_id": "sig-009-manual",
+      "competitor_name": "Notion",
+      "what_happened": "Notion raises $200M at a $15B valuation, focusing on AI and enterprise expansion",
+      "strategic_implication": "Increased investment in AI and enterprise sales, potentially disrupting the project management market",
+      "impact_on_user": "TaskFlow's AI-powered project management for engineering teams may face heightened competition from Notion's enhanced AI capabilities",
+      "recommended_action": "Within 4 weeks, conduct a competitive AI feature benchmarking against Notion's upcoming AI capabilities to inform TaskFlow's R&D priorities",
+      "urgency": "high",
+      "opportunity_or_threat": "threat",
+      "time_horizon": "short_term"
+    },
+    {
+      "signal_id": "sig-003",
+      "competitor_name": "Notion",
+      "what_happened": "Notion hires 15 ML engineers for 'next-generation workspace intelligence'",
+      "strategic_implication": "Notion aggressively develops AI-powered workspace solutions, potentially enhancing its project management capabilities",
+      "impact_on_user": "TaskFlow's deep integration with developer workflows may be replicated by Notion, eroding a key differentiator",
+      "recommended_action": "Within 6 weeks, develop a roadmap to further enhance TaskFlow's GitHub/GitLab integration, emphasizing unique developer-centric features",
+      "urgency": "medium",
+      "opportunity_or_threat": "threat",
+      "time_horizon": "short_term"
+    },
+    {
+      "signal_id": "sig-007",
+      "competitor_name": "Coda",
+      "what_happened": "Coda announces strategic partnership with Atlassian, integrating Coda docs with Jira boards",
+      "strategic_implication": "Coda strengthens its ecosystem play, enhancing its value proposition for joint customers with Atlassian",
+      "impact_on_user": "TaskFlow may face increased competition from Coda's expanded ecosystem, particularly among Atlassian-heavy engineering teams",
+      "recommended_action": "Within 3 weeks, assess the feasibility of a similar strategic partnership with a complementary ecosystem player (e.g., CircleCI, Travis CI)",
+      "urgency": "medium",
+      "opportunity_or_threat": "threat",
+      "time_horizon": "short_term"
+    },
+    {
+      "signal_id": "sig-001",
+      "competitor_name": "Notion",
+      "what_happened": "Notion launches AI-powered project templates with automated planning and status updates",
+      "strategic_implication": "Notion enhances user experience and productivity, attracting new customers with AI-driven project management",
+      "impact_on_user": "TaskFlow's AI-powered sprint planning may be perceived as less innovative; highlighting unique value propositions is crucial",
+      "recommended_action": "Immediately update TaskFlow's marketing materials to emphasize the superiority of its AI sprint planning, particularly for engineering teams",
+      "urgency": "critical",
+      "opportunity_or_threat": "threat",
+      "time_horizon": "immediate"
+    },
+    {
+      "signal_id": "sig-002",
+      "competitor_name": "Notion",
+      "what_happened": "Notion cuts Enterprise pricing by 25%, making it more appealing to larger organizations",
+      "strategic_implication": "Notion competes more aggressively on price, potentially gaining market share among larger organizations",
+      "impact_on_user": "TaskFlow's pricing strategy for Series A-C tech startups may need adjustment to remain competitive, particularly for larger teams",
+      "recommended_action": "Within 5 weeks, conduct a pricing sensitivity analysis among TaskFlow's target market to inform potential pricing adjustments",
+      "urgency": "medium",
+      "opportunity_or_threat": "threat",
+      "time_horizon": "short_term"
+    },
+    {
+      "signal_id": "sig-008",
+      "competitor_name": "Coda",
+      "what_happened": "Coda launches AI Packs for engineering workflows, including sprint retrospective analysis and bug triage",
+      "strategic_implication": "Coda enhances its automation capabilities, targeting a larger share of the engineering team market",
+      "impact_on_user": "TaskFlow's automated standup reports and velocity tracking may be perceived as less comprehensive; highlighting unique integrations is key",
+      "recommended_action": "Within 4 weeks, develop a comparison guide highlighting TaskFlow's exclusive GitHub/GitLab integrations and their benefits for engineering teams",
+      "urgency": "high",
+      "opportunity_or_threat": "threat",
+      "time_horizon": "short_term"
+    },
+    {
+      "signal_id": "sig-005",
+      "competitor_name": "Linear",
+      "what_happened": "Linear launches 'Linear Insights' with predictive analytics, enhancing its appeal for enterprise deals",
+      "strategic_implication": "Linear positions itself for more enterprise sales with advanced analytics, potentially increasing competition in the project management space",
+      "impact_on_user": "TaskFlow's velocity tracking may be seen as less sophisticated; emphasizing actionable insights from its AI-powered sprint planning is crucial",
+      "recommended_action": "Within 6 weeks, enhance TaskFlow's velocity tracking to provide more actionable, AI-driven insights for engineering teams, and showcase these in marketing materials",
+      "urgency": "medium",
+      "opportunity_or_threat": "threat",
+      "time_horizon": "short_term"
+    },
+    {
+      "signal_id": "sig-004",
+      "competitor_name": "Linear",
+      "what_happened": "Linear adds GitHub Actions integration with auto-triage, enhancing its appeal to development teams",
+      "strategic_implication": "Linear strengthens its integration with developer workflows, potentially attracting more customers from this segment",
+      "impact_on_user": "TaskFlow's GitHub/GitLab integration remains a key differentiator, but continuous enhancement is necessary to stay ahead",
+      "recommended_action": "Within 3 months, explore additional auto-triage features for TaskFlow's GitHub/GitLab integration to maintain a competitive edge",
+      "urgency": "low",
+      "opportunity_or_threat": "neutral",
+      "time_horizon": "long_term"
+    }
+  ]
+}
