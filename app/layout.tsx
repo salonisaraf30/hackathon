@@ -3,6 +3,7 @@ import { Space_Mono, IBM_Plex_Mono } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
 import DashboardShell from "@/components/dashboard/DashboardShell";
+import PostHogProvider from "@/components/PostHogProvider";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -40,9 +41,12 @@ export default function RootLayout({
         className={`${spaceMono.variable} ${ibmPlexMono.variable} antialiased bg-black text-white min-h-screen`}
         style={{ fontFamily: "var(--font-ibm-plex-mono), monospace" }}
       >
-        <Suspense fallback={<div className="min-h-screen bg-black" />}>
-          <DashboardShell>{children}</DashboardShell>
-        </Suspense>
+        {/* PostHogProvider wraps everything so analytics are available on every page */}
+        <PostHogProvider>
+          <Suspense fallback={<div className="min-h-screen bg-black" />}>
+            <DashboardShell>{children}</DashboardShell>
+          </Suspense>
+        </PostHogProvider>
       </body>
     </html>
   );

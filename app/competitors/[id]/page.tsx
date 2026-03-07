@@ -8,6 +8,12 @@ import {
   PolarGrid,
   PolarAngleAxis,
   Radar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
 } from "recharts";
 import { Switch } from "@/components/ui/switch";
 import { signalTypeConfig } from "@/data/mock-data";
@@ -29,6 +35,21 @@ type ApiSignal = {
   source: string;
   importance_score: number | null;
   detected_at: string | null;
+};
+
+type TrendMetric = {
+  date: string;
+  signal_count: number | null;
+  activity_score: number | null;
+};
+
+type TrendData = {
+  metrics: TrendMetric[];
+  velocity: {
+    last7DaysAvg: number;
+    prior7DaysAvg: number;
+    changePercent: number | null;
+  };
 };
 
 const TABS = ["SIGNALS", "RADAR", "SETTINGS"];
@@ -58,22 +79,27 @@ export default function CompetitorDetailPage() {
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [competitor, setCompetitor] = useState<ApiCompetitor | null>(null);
   const [signals, setSignals] = useState<ApiSignal[]>([]);
+  const [trendData, setTrendData] = useState<TrendData | null>(null);
 
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
   useEffect(() => {
     if (!id) return;
     const load = async () => {
-      const [cRes, sRes] = await Promise.all([
+      const [cRes, sRes, tRes] = await Promise.all([
         fetch("/api/competitors"),
         fetch(`/api/signals?competitor_id=${encodeURIComponent(id)}&limit=200`),
+        fetch(`/api/competitors/${encodeURIComponent(id)}/trends?days=30`),
       ]);
       const cJson = await cRes.json();
       const sJson = await sRes.json();
+      const tJson = await tRes.json();
+
       setCompetitor(((cJson.competitors as ApiCompetitor[] | undefined) ?? []).find((c) => c.id === id) ?? null);
       setSignals(((sJson.signals as ApiSignal[] | undefined) ?? []).sort(
         (a, b) => new Date(b.detected_at ?? 0).getTime() - new Date(a.detected_at ?? 0).getTime()
       ));
+      setTrendData(tJson ?? null);
     };
     void load();
   }, [id]);
@@ -93,6 +119,18 @@ export default function CompetitorDetailPage() {
     COMPETITOR: signals.filter((s) => s.signal_type === axis).length,
     "YOUR PRODUCT": Math.floor(Math.random() * 5) + 1,
   }));
+
+  // Format trend metrics for the LineChart — shorten date label to MM/DD
+  const chartData = (trendData?.metrics ?? []).map((m) => ({
+    date: m.date.slice(5), // "2024-01-15" → "01-15"
+    signals: m.signal_count ?? 0,
+    activity: Math.round((m.activity_score ?? 0) * 10) / 10,
+  }));
+
+  // Velocity callout — % change in signal volume last 7 days vs prior 7 days
+  const velocity = trendData?.velocity ?? null;
+  const velocityUp = velocity?.changePercent !== null && (velocity?.changePercent ?? 0) > 0;
+  const velocityColor = velocityUp ? "#FF00FF" : "#00FF41";
 
   if (!competitor) {
     return (
@@ -233,15 +271,114 @@ export default function CompetitorDetailPage() {
 
       {/* Radar tab */}
       {activeTab === "RADAR" && (
-        <div className="p-6 rounded-lg" style={{ backgroundColor: "#0a0a0a", border: "1px solid rgba(255,255,255,0.08)" }}>
-          <ResponsiveContainer width="100%" height={350}>
-            <RadarChart data={radarData}>
-              <PolarGrid stroke="#00FF41" strokeOpacity={0.15} />
-              <PolarAngleAxis dataKey="axis" tick={{ fill: "#fff", fontSize: 13, fontFamily: "var(--font-ibm-plex-mono)" }} />
-              <Radar name={competitor.name} dataKey="COMPETITOR" stroke="#FF00FF" fill="#FF00FF" fillOpacity={0.15} strokeWidth={2} dot={{ r: 4, fill: "#FF00FF" }} />
-              <Radar name="YOUR PRODUCT" dataKey="YOUR PRODUCT" stroke="#00FFFF" fill="#00FFFF" fillOpacity={0.1} strokeWidth={2} strokeDasharray="5 5" dot={{ r: 4, fill: "#00FFFF" }} />
-            </RadarChart>
-          </ResponsiveContainer>
+        <div className="space-y-6">
+          {/* Existing radar chart */}
+          <div className="p-6 rounded-lg" style={{ backgroundColor: "#0a0a0a", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <p className="text-[11px] text-[#888888] mb-4" style={SM}>SIGNAL TYPE DISTRIBUTION</p>
+            <ResponsiveContainer width="100%" height={350}>
+              <RadarChart data={radarData}>
+                <PolarGrid stroke="#00FF41" strokeOpacity={0.15} />
+                <PolarAngleAxis dataKey="axis" tick={{ fill: "#fff", fontSize: 13, fontFamily: "var(--font-ibm-plex-mono)" }} />
+                <Radar name={competitor.name} dataKey="COMPETITOR" stroke="#FF00FF" fill="#FF00FF" fillOpacity={0.15} strokeWidth={2} dot={{ r: 4, fill: "#FF00FF" }} />
+                <Radar name="YOUR PRODUCT" dataKey="YOUR PRODUCT" stroke="#00FFFF" fill="#00FFFF" fillOpacity={0.1} strokeWidth={2} strokeDasharray="5 5" dot={{ r: 4, fill: "#00FFFF" }} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Signal velocity callout */}
+          {velocity && (
+            <div className="p-4 rounded-lg flex items-center gap-6" style={{ backgroundColor: "#0a0a0a", border: `1px solid ${velocityColor}40` }}>
+              <div>
+                <p className="text-[11px] text-[#888888] mb-1" style={IBM}>SIGNAL VELOCITY</p>
+                <p className="text-[22px]" style={{ color: velocityColor, ...SM }}>
+                  {velocity.changePercent !== null
+                    ? `${velocityUp ? "+" : ""}${velocity.changePercent}%`
+                    : "—"}
+                </p>
+              </div>
+              <div className="h-10 w-px bg-white/10" />
+              <div>
+                <p className="text-[11px] text-[#888888] mb-1" style={IBM}>LAST 7 DAYS AVG</p>
+                <p className="text-[16px] text-white" style={SM}>{velocity.last7DaysAvg} signals/day</p>
+              </div>
+              <div className="h-10 w-px bg-white/10" />
+              <div>
+                <p className="text-[11px] text-[#888888] mb-1" style={IBM}>PRIOR 7 DAYS AVG</p>
+                <p className="text-[16px] text-white" style={SM}>{velocity.prior7DaysAvg} signals/day</p>
+              </div>
+              <div className="ml-auto text-right">
+                <p className="text-[11px]" style={{ color: velocityColor, ...IBM }}>
+                  {velocityUp ? "↑ Competitor activity accelerating" : "↓ Competitor activity slowing"}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* 30-day trend line chart */}
+          <div className="p-6 rounded-lg" style={{ backgroundColor: "#0a0a0a", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <p className="text-[11px] text-[#888888] mb-4" style={SM}>30-DAY ACTIVITY TREND</p>
+            {chartData.length === 0 ? (
+              <p className="text-[13px] text-[#888888] text-center py-10" style={IBM}>
+                No trend data yet — check back after the daily metrics cron has run.
+              </p>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fill: "#888888", fontSize: 11, fontFamily: "var(--font-ibm-plex-mono)" }}
+                    axisLine={{ stroke: "rgba(255,255,255,0.1)" }}
+                    tickLine={false}
+                  />
+                  {/* Left axis — signal count */}
+                  <YAxis
+                    yAxisId="left"
+                    tick={{ fill: "#888888", fontSize: 11, fontFamily: "var(--font-ibm-plex-mono)" }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={30}
+                  />
+                  {/* Right axis — activity score */}
+                  <YAxis
+                    yAxisId="right"
+                    orientation="right"
+                    tick={{ fill: "#888888", fontSize: 11, fontFamily: "var(--font-ibm-plex-mono)" }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={40}
+                  />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "#0D0D0D", border: "1px solid rgba(255,255,255,0.1)", fontFamily: "var(--font-ibm-plex-mono)", fontSize: 12 }}
+                    labelStyle={{ color: "#888888" }}
+                  />
+                  <Legend
+                    wrapperStyle={{ fontSize: 11, fontFamily: "var(--font-ibm-plex-mono)", color: "#888888" }}
+                  />
+                  <Line
+                    yAxisId="left"
+                    type="monotone"
+                    dataKey="signals"
+                    name="Signal Count"
+                    stroke="#00FF41"
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 4, fill: "#00FF41" }}
+                  />
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="activity"
+                    name="Activity Score"
+                    stroke="#FF00FF"
+                    strokeWidth={2}
+                    dot={false}
+                    strokeDasharray="4 2"
+                    activeDot={{ r: 4, fill: "#FF00FF" }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
         </div>
       )}
 

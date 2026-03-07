@@ -3,38 +3,41 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { handleApiError, ApiError } from "@/lib/utils/api-error";
 
 // GET /api/digests — List all digests for the authenticated user
 export async function GET() {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
-  // Check auth
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+    // Verify the user is authenticated before doing anything
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new ApiError("Unauthorized", 401);
 
-  if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { data: digests, error } = await supabase
-    .from("digests")
-    .select(
+    // Fetch all digests with their associated signals and competitor names
+    // digest_signals is the join table linking digests to the signals they include
+    // signals → competitors gives us the competitor name for each signal in the digest
+    const { data: digests, error } = await supabase
+      .from("digests")
+      .select(
+        `
+        *,
+        digest_signals(
+          signal_id,
+          signals(id, title, signal_type, competitor_id, competitors(name))
+        )
       `
-      *,
-      digest_signals(
-        signal_id,
-        signals(id, title, signal_type, competitor_id, competitors(name))
       )
-    `
-    )
-    .eq("user_id", user.id)
-    .order("generated_at", { ascending: false });
+      .eq("user_id", user.id)
+      .order("generated_at", { ascending: false });
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    // Surface DB errors as 500 via handleApiError
+    if (error) throw new ApiError(error.message);
+
+    return NextResponse.json({ digests });
+
+  } catch (err) {
+    // handleApiError distinguishes ApiError (known status) from unknown errors (500)
+    return handleApiError(err);
   }
-
-  return NextResponse.json({ digests });
 }

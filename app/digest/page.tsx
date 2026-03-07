@@ -480,4 +480,5 @@ export default function DigestPage() {
       </div>
     </div>
   );
+  
 }
