@@ -147,13 +147,16 @@ export async function generateDigest(userId: string): Promise<{
         competitor_name: scenario.competitor_name,
         prediction: scenario.prediction,
         confidence: scenario.confidence,
-        evidence: scenario.evidence,
+        evidence: (scenario as typeof scenario & { evidence?: Json }).evidence ?? [],
         timeframe: scenario.timeframe,
         impact_if_true: scenario.impact_if_true,
         preemptive_action: scenario.preemptive_action,
         counter_scenario: scenario.counter_scenario,
       })),
-      wildcards: trace.final_digest.scenarios.wildcards,
+      wildcards:
+        (trace.final_digest.scenarios as { wildcards?: Json[]; wildcard?: Json[] }).wildcards ??
+        (trace.final_digest.scenarios as { wildcards?: Json[]; wildcard?: Json[] }).wildcard ??
+        [],
     },
     quality_grade: trace.final_digest.quality_grade,
     // Pipeline trace is stored for debugging and prompt improvement — not shown to users

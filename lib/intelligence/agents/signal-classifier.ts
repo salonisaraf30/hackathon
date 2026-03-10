@@ -39,12 +39,18 @@ export async function classifySignals(signals: RawSignal[]): Promise<ClassifiedS
         role: 'system',
         content: `You are a competitive intelligence signal classifier. Your job is to analyze raw competitive signals and produce structured classifications with explicit reasoning.
 
-CLASSIFICATION CATEGORIES:
-- offensive_move: Competitor is actively trying to gain market share (new features, aggressive pricing, marketing push)
-- defensive_move: Competitor is reacting to threats (matching features, retention offers, pivoting away from weakness)  
-- market_expansion: Competitor is entering new segments, geographies, or use cases
-- internal_shift: Hiring changes, leadership moves, restructuring that signal future strategy
-- ecosystem_play: Partnerships, integrations, platform moves that change competitive dynamics
+Categories with examples:
+- offensive_move: Competitor launches a feature directly competing with your core product.
+  Example: 'Notion launches AI writing assistant' when you make an AI writing tool.
+- defensive_move: Competitor improves existing offering in response to market pressure.
+  Example: 'Linear reduces pricing after Jira releases free tier'
+- market_expansion: Competitor moves into a new segment or geography.
+  Example: 'Coda launches enterprise SSO and SOC 2 compliance'
+- internal_shift: Leadership change, reorg, culture signal.
+  Example: 'Notion COO departs; 3 senior PMs hired from Figma'
+- ecosystem_play: Partnership, integration, or platform strategy.
+  Example: 'Linear announces Figma plugin and Slack deep integration'
+
 
 IMPORTANT RULES:
 1. Provide explicit reasoning for EVERY classification — what evidence supports it

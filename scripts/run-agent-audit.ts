@@ -124,10 +124,10 @@ async function runAllAgents() {
   console.log(`  Done: ${challenges.length} challenges generated, ${redTeamTokens} tokens, ${redTeamDuration}ms\n`);
 
   // ─── Agent 4: Scenario Predictor ───
-  console.log("[4/7] Running Scenario Predictor...");
+  console.log("[4/7] Running Scenario Predictor..."); 
   resetSessionUsage();
   const scenarioStart = Date.now();
-  const scenarios = await predictScenarios(classifiedSignals, user_product);
+  const scenarios = await predictScenarios(classifiedSignals, JSON.stringify(insights), user_product);
   const scenarioDuration = Date.now() - scenarioStart;
   const scenarioTokens = getSessionUsage()["scenario-predictor"] || 0;
   

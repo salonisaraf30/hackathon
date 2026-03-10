@@ -15,7 +15,11 @@
     "test:news-monitor": "tsx scripts/test-news-monitor.ts",
     "test:jobs-monitor": "tsx scripts/test-jobs-monitor.ts",
     "test:producthunt-monitor": "tsx scripts/test-producthunt-monitor.ts",
-    "test:techcrunch-monitor": "tsx scripts/test-techcrunch-monitor.ts"
+    "test:techcrunch-monitor": "tsx scripts/test-techcrunch-monitor.ts",
+    "test:audit-agent": "tsx scripts/run-agent-audit.ts",
+    "test:audit-agent-parallel": "tsx scripts/run-agent-audit-parallel.ts",
+    "digest:localhost": "tsx scripts/test-digest-localhost.ts",
+    "digest:localhost:live": "tsx scripts/test-digest-localhost.ts --live"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

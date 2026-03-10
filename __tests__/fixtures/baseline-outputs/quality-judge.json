@@ -1,85 +1,168 @@
 {
   "agent_name": "quality-judge",
-  "run_at": "2026-03-02T03:39:51.823Z",
-  "duration_ms": 20922,
-  "tokens_used": 2796,
+  "run_at": "2026-03-09T03:44:20.402Z",
+  "duration_ms": 50973,
+  "tokens_used": 5933,
   "raw_output": {
     "scores": [
       {
-        "signal_id": "0",
-        "specificity_score": 8,
-        "actionability_score": 9,
-        "evidence_score": 6,
-        "overall_score": 7.7,
-        "include_in_digest": true,
-        "revision_note": "Consider Red Team's partial challenge, nuance Notion's AI focus"
-      },
-      {
-        "signal_id": "1",
-        "specificity_score": 7,
-        "actionability_score": 8,
-        "evidence_score": 5,
-        "overall_score": 6.7,
-        "include_in_digest": true,
-        "revision_note": "Address Red Team's partial challenge, clarify Notion's project management focus"
-      },
-      {
-        "signal_id": "2",
+        "signal_id": "sig-003",
         "specificity_score": 6,
         "actionability_score": 7,
-        "evidence_score": 5,
-        "overall_score": 6,
+        "evidence_score": 8,
+        "red_team_penalty": 1,
+        "overall_score": 6.9,
         "include_in_digest": true,
-        "revision_note": "Emphasize TaskFlow's unique value proposition for engineering teams"
+        "rejection_reason": null,
+        "revision_note": "Increased specificity score due to named competitor and product area"
       },
       {
-        "signal_id": "3",
+        "signal_id": "sig-007",
+        "specificity_score": 7,
+        "actionability_score": 8,
+        "evidence_score": 9,
+        "red_team_penalty": 2,
+        "overall_score": 7.2,
+        "include_in_digest": true,
+        "rejection_reason": null,
+        "revision_note": "High evidence score due to verified partnership details"
+      },
+      {
+        "signal_id": "sig-009-manual",
+        "specificity_score": 5,
+        "actionability_score": 6,
+        "evidence_score": 3,
+        "red_team_penalty": 3,
+        "overall_score": 4.3,
+        "include_in_digest": false,
+        "rejection_reason": "OVERTURNED (auto-exclude)",
+        "revision_note": "Low evidence score and overturned verdict led to exclusion"
+      },
+      {
+        "signal_id": "sig-001",
         "specificity_score": 9,
         "actionability_score": 9,
-        "evidence_score": 8,
-        "overall_score": 8.7,
+        "evidence_score": 10,
+        "red_team_penalty": 1,
+        "overall_score": 9.1,
         "include_in_digest": true,
-        "revision_note": "None, upheld by Red Team"
+        "rejection_reason": null,
+        "revision_note": "High scores across the board due to direct competition and clear action"
       },
       {
-        "signal_id": "4",
+        "signal_id": "sig-005",
         "specificity_score": 6,
         "actionability_score": 7,
-        "evidence_score": 5,
-        "overall_score": 6,
+        "evidence_score": 8,
+        "red_team_penalty": 2,
+        "overall_score": 6.5,
         "include_in_digest": true,
-        "revision_note": "Consider TaskFlow's unique value proposition for Series A-C tech startups"
+        "rejection_reason": null,
+        "revision_note": "Moderate scores due to potential for non-engineering focus"
       },
       {
-        "signal_id": "5",
-        "specificity_score": 8,
-        "actionability_score": 9,
-        "evidence_score": 6,
-        "overall_score": 7.7,
-        "include_in_digest": true,
-        "revision_note": "Consider a more immediate response to Coda's growing focus"
-      },
-      {
-        "signal_id": "6",
+        "signal_id": "sig-008",
         "specificity_score": 7,
         "actionability_score": 8,
-        "evidence_score": 5,
-        "overall_score": 6.7,
+        "evidence_score": 9,
+        "red_team_penalty": 1,
+        "overall_score": 7.9,
         "include_in_digest": true,
-        "revision_note": "Differentiate between Linear's enterprise focus and TaskFlow's engineering team focus"
+        "rejection_reason": null,
+        "revision_note": "High evidence score and specific competitor action"
       },
       {
-        "signal_id": "7",
-        "specificity_score": 8,
-        "actionability_score": 6,
-        "evidence_score": 7,
-        "overall_score": 7,
+        "signal_id": "sig-002",
+        "specificity_score": 6,
+        "actionability_score": 7,
+        "evidence_score": 8,
+        "red_team_penalty": 2,
+        "overall_score": 6.3,
         "include_in_digest": true,
-        "revision_note": "None, upheld by Red Team"
+        "rejection_reason": null,
+        "revision_note": "Moderate scores due to potential non-engineering segment focus"
+      },
+      {
+        "signal_id": "sig-004",
+        "specificity_score": 6,
+        "actionability_score": 7,
+        "evidence_score": 8,
+        "red_team_penalty": 2,
+        "overall_score": 6.5,
+        "include_in_digest": true,
+        "rejection_reason": null,
+        "revision_note": "Moderate scores due to potential non-engineering workflow focus"
       }
     ],
-    "executive_summary_draft": "TaskFlow faces increasing competition from Notion, Coda, and Linear, who are aggressively investing in AI capabilities and ecosystem expansions. To maintain its edge, TaskFlow must enhance its AI-powered sprint planning, deepen GitHub/GitLab integrations, and emphasize its unique value proposition for engineering teams. Immediate marketing updates and strategic partnerships are crucial to stay competitive.",
-    "digest_quality_grade": "B+",
-    "improvement_notes": "Enhance signal evidence with more direct, verifiable sources. Provide clearer differentiation between competitors' strategies and TaskFlow's unique value proposition. Consider adding a 'Competitor Landscape' section to visualize market shifts."
+    "digest_insights": [
+      {
+        "signal_id": "sig-003",
+        "competitor_name": "Notion",
+        "headline": "Notion hires 15 ML engineers for AI-enhanced project management",
+        "so_what": "TaskFlow's AI-powered project management for engineering teams may face increased competition from Notion's enhanced offerings",
+        "action": "Conduct competitive feature analysis within 1 week, prioritizing R&D to address gaps",
+        "urgency": "medium",
+        "confidence_label": "medium"
+      },
+      {
+        "signal_id": "sig-007",
+        "competitor_name": "Coda",
+        "headline": "Coda announces Atlassian partnership, expanding ecosystem reach",
+        "so_what": "TaskFlow may face increased competition from Coda's enhanced offerings among Atlassian-using engineering teams",
+        "action": "Develop targeted sales outreach campaign within 2 weeks, highlighting TaskFlow's GitHub/GitLab integration",
+        "urgency": "low",
+        "confidence_label": "medium"
+      },
+      {
+        "signal_id": "sig-001",
+        "competitor_name": "Notion",
+        "headline": "Notion launches AI-powered project templates, directly competing with TaskFlow",
+        "so_what": "TaskFlow's AI-powered project management for engineering teams faces direct competition from Notion's new features",
+        "action": "Publish blog post and social media campaign within 3 days, highlighting TaskFlow's deeper workflow integrations",
+        "urgency": "medium",
+        "confidence_label": "high"
+      },
+      {
+        "signal_id": "sig-005",
+        "competitor_name": "Linear",
+        "headline": "Linear launches 'Linear Insights' analytics dashboard, competing with TaskFlow's velocity tracking",
+        "so_what": "TaskFlow's velocity tracking and automated standup reports may face competition from Linear's new analytics offering",
+        "action": "Enhance TaskFlow's analytics capabilities within 2 weeks, integrating with popular data visualization tools",
+        "urgency": "low",
+        "confidence_label": "medium"
+      },
+      {
+        "signal_id": "sig-008",
+        "competitor_name": "Coda",
+        "headline": "Coda launches AI Packs for engineering workflows, introducing competitive AI-driven features",
+        "so_what": "TaskFlow's AI-powered sprint planning and automated standup reports face competition from Coda's AI Packs",
+        "action": "Develop case study within 3 weeks, showcasing TaskFlow's successful implementation in a Series A-C tech startup",
+        "urgency": "medium",
+        "confidence_label": "medium"
+      },
+      {
+        "signal_id": "sig-002",
+        "competitor_name": "Notion",
+        "headline": "Notion reduces Enterprise plan pricing by 25%, responding to market pressure",
+        "so_what": "TaskFlow may face pricing pressure from Notion's reduced Enterprise plan pricing among larger Series C tech startups",
+        "action": "Review TaskFlow's pricing strategy within 1 week, considering tiered pricing or discounts for annual commitments",
+        "urgency": "low",
+        "confidence_label": "medium"
+      },
+      {
+        "signal_id": "sig-004",
+        "competitor_name": "Linear",
+        "headline": "Linear adds GitHub Actions integration with auto-triage, enhancing existing offering",
+        "so_what": "TaskFlow's GitHub/GitLab integration may face competition from Linear's enhanced GitHub Actions integration",
+        "action": "Publish support article within 3 days, highlighting differences and advantages of TaskFlow's integration",
+        "urgency": "low",
+        "confidence_label": "medium"
+      }
+    ],
+    "executive_summary": "Notion and Coda aggressively expand AI capabilities and ecosystem plays, while Linear focuses on defensive moves. TaskFlow must navigate this complex landscape to maintain market share. Key action: Product Lead to conduct competitive analysis of Notion's upcoming features by EOW, outputting a one-page brief for potential countermeasures. Notion's AI-powered project templates directly compete with TaskFlow's core offering, and Coda's Atlassian partnership increases competition among engineering teams. (3 signals, 2 competitors, 1 feature, 1 timeframe)",
+    "digest_quality_grade": "B",
+    "signals_included": 7,
+    "signals_excluded": 1,
+    "improvement_notes": "Increase specificity in recommended actions, provide more concrete output artifacts, and enhance evidence tiering for overturned signals"
   }
 }

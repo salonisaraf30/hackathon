@@ -1,74 +1,342 @@
 {
   "agent_name": "signal-verifier",
-  "run_at": "2026-03-02T03:39:22.441Z",
-  "duration_ms": 16913,
-  "tokens_used": 2745,
+  "run_at": "2026-03-09T03:43:29.419Z",
+  "duration_ms": 103986,
+  "tokens_used": 6972,
   "raw_output": [
-    {
-      "signal_id": "sig-009-manual",
-      "verified": true,
-      "evidence_strength": 0.9,
-      "evidence_note": "Direct report from The Information provides strong evidence for Notion's funding and strategic growth phase",
-      "missing_evidence": []
-    },
     {
       "signal_id": "sig-003",
       "verified": true,
-      "evidence_strength": 0.8,
-      "evidence_note": "Notion's job postings for 15 ML engineers clearly indicate investment in AI-powered workspace solutions",
-      "missing_evidence": []
+      "evidence_strength": 1,
+      "evidence_tier": "HIGH",
+      "claim_breakdown": [
+        {
+          "claim": "Notion is hiring 15 ML engineers for SF office, focusing on 'next-generation workspace intelligence' and 'autonomous task management'",
+          "status": "evidenced",
+          "source_text": "Join our AI team to build the future of work. We're hiring ML Engineers, Research Scientists, and AI Product Managers to work on autonomous agents that help teams manage projects without manual overhead...",
+          "source_signal_id": "sig-003"
+        },
+        {
+          "claim": "Notion is significantly enhancing its AI capabilities, potentially disrupting the project management market",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        },
+        {
+          "claim": "TaskFlow's AI-powered project management for engineering teams may face increased competition from Notion's enhanced offerings, potentially threatening TaskFlow's market share among Series A-C tech startups",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        },
+        {
+          "claim": "high / short_term",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        }
+      ],
+      "evidenced_count": 1,
+      "inferred_count": 3,
+      "contradicted_count": 0,
+      "evidence_note": "Only the hiring of ML engineers is directly supported by the signal.",
+      "missing_evidence": [
+        "Official statements or additional signals confirming Notion's AI enhancement plans and their impact on the market",
+        "Market analysis or research reports detailing the potential competition impact on TaskFlow",
+        "Notion's product roadmap or release notes indicating the short-term timeline for enhanced offerings"
+      ],
+      "rejection_flag": true
     },
     {
       "signal_id": "sig-007",
       "verified": true,
-      "evidence_strength": 0.9,
-      "evidence_note": "Official announcement from Coda and Atlassian confirms the strategic partnership and its implications",
-      "missing_evidence": []
+      "evidence_strength": 1,
+      "evidence_tier": "HIGH",
+      "claim_breakdown": [
+        {
+          "claim": "Coda announced a strategic partnership with Atlassian, including deep integration and joint go-to-market efforts",
+          "status": "evidenced",
+          "source_text": "Coda + Atlassian: The best of both worlds. Embed live Jira boards in your Coda docs with real-time sync. Edit issues directly in Coda and see updates flow back to Jira.",
+          "source_signal_id": "sig-007"
+        },
+        {
+          "claim": "Coda is expanding its reach through a strong ecosystem play, increasing its competitiveness in the project management market",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        },
+        {
+          "claim": "TaskFlow may face increased competition from Coda's enhanced offerings, particularly among engineering teams already invested in the Atlassian ecosystem, potentially impacting TaskFlow's sales pipeline",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        },
+        {
+          "claim": "medium / short_term",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        }
+      ],
+      "evidenced_count": 1,
+      "inferred_count": 3,
+      "contradicted_count": 0,
+      "evidence_note": "Only the partnership announcement is directly supported by the signal.",
+      "missing_evidence": [
+        "Market research or analysis detailing the competitiveness impact of Coda's ecosystem play",
+        "Sales data or customer feedback indicating the potential impact on TaskFlow's sales pipeline",
+        "Coda's product roadmap or release notes indicating the short-term timeline for enhanced offerings"
+      ],
+      "rejection_flag": true
+    },
+    {
+      "signal_id": "sig-009-manual",
+      "verified": false,
+      "evidence_strength": 0,
+      "evidence_tier": "LOW",
+      "claim_breakdown": [
+        {
+          "claim": "Notion reportedly raised $200M at a $15B valuation, planning to enhance AI capabilities and expand enterprise sales in EMEA and APAC",
+          "status": "contradicted",
+          "source_text": "No official confirmation from Notion, only reported by The Information",
+          "source_signal_id": "sig-009-manual"
+        },
+        {
+          "claim": "Notion is heavily investing in AI and enterprise expansion, signaling a significant market play",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        },
+        {
+          "claim": "TaskFlow may face increased competition from Notion's enhanced AI offerings and expanded enterprise sales efforts, potentially impacting TaskFlow's growth among larger Series C tech startups",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        },
+        {
+          "claim": "medium / long_term",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        }
+      ],
+      "evidenced_count": 0,
+      "inferred_count": 3,
+      "contradicted_count": 1,
+      "evidence_note": "The funding report is not officially confirmed by Notion.",
+      "missing_evidence": [
+        "Official press release or confirmation from Notion regarding the funding and planned use"
+      ],
+      "rejection_flag": true
     },
     {
       "signal_id": "sig-001",
       "verified": true,
-      "evidence_strength": 0.7,
-      "evidence_note": "Notion's product launch announcement supports the strategic implication, though user impact is somewhat inferred",
+      "evidence_strength": 1,
+      "evidence_tier": "HIGH",
+      "claim_breakdown": [
+        {
+          "claim": "Notion launched AI-powered project templates, directly competing with core project management products",
+          "status": "evidenced",
+          "source_text": "Notion Projects brings AI-powered project management to your workspace. Automatically generate project plans, break down epics into tasks, and get AI-suggested timelines based on your team's historical velocity...",
+          "source_signal_id": "sig-001"
+        },
+        {
+          "claim": "Notion is aggressively expanding its project management capabilities, challenging traditional players",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        },
+        {
+          "claim": "TaskFlow's AI-powered project management for engineering teams faces direct competition from Notion's new features, potentially confusing TaskFlow's target market",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        },
+        {
+          "claim": "critical / immediate",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        }
+      ],
+      "evidenced_count": 1,
+      "inferred_count": 3,
+      "contradicted_count": 0,
+      "evidence_note": "Only the launch of AI-powered project templates is directly supported by the signal.",
       "missing_evidence": [
-        "Direct user feedback on Notion's AI-powered project templates"
-      ]
+        "Market analysis or research reports detailing the competitiveness impact of Notion's expansion",
+        "Customer feedback or surveys indicating the potential confusion among TaskFlow's target market",
+        "Notion's product roadmap or release notes indicating the immediate timeline for enhanced offerings"
+      ],
+      "rejection_flag": true
     },
     {
-      "signal_id": "sig-002",
+      "signal_id": "sig-005",
       "verified": true,
-      "evidence_strength": 0.6,
-      "evidence_note": "Pricing change is confirmed, but impact on TaskFlow's pricing strategy is somewhat speculative",
+      "evidence_strength": 1,
+      "evidence_tier": "HIGH",
+      "claim_breakdown": [
+        {
+          "claim": "Linear launched 'Linear Insights' analytics dashboard, a premium feature competing with other analytics and project management tools",
+          "status": "evidenced",
+          "source_text": "Linear Insights: Understand your engineering organization like never before. Track cycle time, identify bottlenecks, and predict delivery dates with ML-powered estimates that learn from your team's patterns.",
+          "source_signal_id": "sig-005"
+        },
+        {
+          "claim": "Linear is expanding its revenue streams through premium features, increasing its competitiveness",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        },
+        {
+          "claim": "TaskFlow's velocity tracking and automated standup reports may face competition from Linear's new analytics offering, potentially impacting TaskFlow's sales among teams prioritizing analytics",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        },
+        {
+          "claim": "medium / short_term",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        }
+      ],
+      "evidenced_count": 1,
+      "inferred_count": 3,
+      "contradicted_count": 0,
+      "evidence_note": "Only the launch of Linear Insights is directly supported by the signal.",
       "missing_evidence": [
-        "Market research on pricing sensitivity among TaskFlow's target market"
-      ]
+        "Market research or analysis detailing the competitiveness impact of Linear's premium features",
+        "Sales data or customer feedback indicating the potential impact on TaskFlow's sales",
+        "Linear's product roadmap or release notes indicating the short-term timeline for enhanced offerings"
+      ],
+      "rejection_flag": true
     },
     {
       "signal_id": "sig-008",
       "verified": true,
-      "evidence_strength": 0.7,
-      "evidence_note": "Coda's product launch announcement supports the strategic implication, though user impact is somewhat inferred",
+      "evidence_strength": 1,
+      "evidence_tier": "HIGH",
+      "claim_breakdown": [
+        {
+          "claim": "Coda launched AI Packs for engineering workflows, introducing competitive AI-driven features",
+          "status": "evidenced",
+          "source_text": "AI Packs for Engineering: Automate your most repetitive workflows. Sprint retro summarizer analyzes your completed issues and suggests process improvements.",
+          "source_signal_id": "sig-008"
+        },
+        {
+          "claim": "Coda is enhancing its engineering workflow capabilities, challenging other workflow and project management tools",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        },
+        {
+          "claim": "TaskFlow's AI-powered sprint planning and automated standup reports for engineering teams face competition from Coda's AI Packs, potentially impacting TaskFlow's market share",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        },
+        {
+          "claim": "medium / short_term",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        }
+      ],
+      "evidenced_count": 1,
+      "inferred_count": 3,
+      "contradicted_count": 0,
+      "evidence_note": "Only the launch of AI Packs is directly supported by the signal.",
       "missing_evidence": [
-        "Comparison of TaskFlow's automation capabilities with Coda's AI Packs"
-      ]
+        "Market analysis or research reports detailing the competitiveness impact of Coda's AI-driven features",
+        "Customer feedback or surveys indicating the potential impact on TaskFlow's market share",
+        "Coda's product roadmap or release notes indicating the short-term timeline for enhanced offerings"
+      ],
+      "rejection_flag": true
     },
     {
-      "signal_id": "sig-005",
-      "verified": false,
-      "evidence_strength": 0.4,
-      "evidence_note": "Linear's product launch announcement is confirmed, but the strategic implication and user impact are somewhat speculative",
+      "signal_id": "sig-002",
+      "verified": true,
+      "evidence_strength": 1,
+      "evidence_tier": "HIGH",
+      "claim_breakdown": [
+        {
+          "claim": "Notion reduced Enterprise plan pricing by 25%, responding to market pressure",
+          "status": "evidenced",
+          "source_text": "Enterprise plan now $15/user/month (billed annually). Includes SAML SSO, advanced permissions, audit log, and priority support.",
+          "source_signal_id": "sig-002"
+        },
+        {
+          "claim": "Notion is adapting to market pricing pressures, maintaining competitiveness",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        },
+        {
+          "claim": "TaskFlow may face pricing pressure from Notion's reduced Enterprise plan pricing, potentially impacting TaskFlow's revenue among larger Series C tech startups",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        },
+        {
+          "claim": "high / short_term",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        }
+      ],
+      "evidenced_count": 1,
+      "inferred_count": 3,
+      "contradicted_count": 0,
+      "evidence_note": "Only the pricing reduction is directly supported by the signal.",
       "missing_evidence": [
-        "Market feedback on Linear Insights, comparative analysis of predictive analytics in project management tools"
-      ]
+        "Market research or analysis detailing the competitiveness impact of Notion's pricing adjustment",
+        "Sales data or customer feedback indicating the potential impact on TaskFlow's revenue",
+        "Notion's product roadmap or release notes indicating the short-term timeline for enhanced offerings"
+      ],
+      "rejection_flag": true
     },
     {
       "signal_id": "sig-004",
       "verified": true,
-      "evidence_strength": 0.5,
-      "evidence_note": "Linear's feature update is confirmed, though the strategic implication and user impact are somewhat inferred",
+      "evidence_strength": 1,
+      "evidence_tier": "HIGH",
+      "claim_breakdown": [
+        {
+          "claim": "Linear added GitHub Actions integration with auto-triage, enhancing its existing offering",
+          "status": "evidenced",
+          "source_text": "New GitHub Actions integration: Failed workflows automatically create Linear issues with full context. AI assigns to the right team member based on CODEOWNERS and recent commit history.",
+          "source_signal_id": "sig-004"
+        },
+        {
+          "claim": "Linear is responding to user demand and market pressure to stay competitive in DevOps tooling",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        },
+        {
+          "claim": "TaskFlow's GitHub/GitLab integration may face competition from Linear's enhanced GitHub Actions integration, potentially impacting TaskFlow's sales among teams invested in GitHub",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        },
+        {
+          "claim": "medium / immediate",
+          "status": "inferred",
+          "source_text": null,
+          "source_signal_id": null
+        }
+      ],
+      "evidenced_count": 1,
+      "inferred_count": 3,
+      "contradicted_count": 0,
+      "evidence_note": "Only the GitHub Actions integration is directly supported by the signal.",
       "missing_evidence": [
-        "User feedback on Linear's GitHub Actions integration, comparative analysis of auto-triage features"
-      ]
+        "User feedback or surveys indicating the demand for GitHub Actions integration",
+        "Market research or analysis detailing the competitiveness impact of Linear's enhanced integration",
+        "Sales data or customer feedback indicating the potential impact on TaskFlow's sales"
+      ],
+      "rejection_flag": true
     }
   ]
 }

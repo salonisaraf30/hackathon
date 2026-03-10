@@ -1,8 +1,8 @@
 {
   "agent_name": "signal-classifier",
-  "run_at": "2026-03-02T03:37:43.179Z",
-  "duration_ms": 27447,
-  "tokens_used": 2387,
+  "run_at": "2026-03-09T03:41:00.644Z",
+  "duration_ms": 29696,
+  "tokens_used": 2483,
   "raw_output": [
     {
       "id": "sig-001",
@@ -17,12 +17,13 @@
       "classification": {
         "category": "offensive_move",
         "confidence": 0.9,
-        "reasoning": "Notion's launch of AI-powered project templates indicates an aggressive push to enhance user experience and productivity, likely aiming to attract new customers and gain market share.",
+        "reasoning": "Notion's launch of AI-powered project templates directly competes with core project management products, indicating an offensive move to capture market share.",
         "strategic_weight": 8,
         "velocity": "accelerating",
         "related_signal_ids": [
           "sig-002",
-          "sig-003"
+          "sig-003",
+          "sig-008"
         ]
       }
     },
@@ -37,14 +38,14 @@
       "raw_content": "Enterprise plan now $15/user/month (billed annually). Includes SAML SSO, advanced permissions, audit log, and priority support. Volume discounts available for organizations over 100 seats.",
       "detected_at": "2026-02-24T14:30:00Z",
       "classification": {
-        "category": "offensive_move",
+        "category": "defensive_move",
         "confidence": 0.8,
-        "reasoning": "The 25% price cut for Notion's Enterprise plan is a competitive move to make the product more appealing to larger organizations, potentially taking market share from competitors.",
-        "strategic_weight": 7,
-        "velocity": "accelerating",
+        "reasoning": "Notion's price reduction for Enterprise plans likely responds to market pressure, aiming to maintain competitiveness in the face of rival offerings.",
+        "strategic_weight": 6,
+        "velocity": "steady",
         "related_signal_ids": [
           "sig-001",
-          "sig-008"
+          "sig-009-manual"
         ]
       }
     },
@@ -60,8 +61,8 @@
       "detected_at": "2026-02-26T11:00:00Z",
       "classification": {
         "category": "internal_shift",
-        "confidence": 0.85,
-        "reasoning": "Hiring 15 ML engineers suggests Notion is heavily investing in AI capabilities, indicating a strategic shift towards more intelligent workspace solutions.",
+        "confidence": 0.7,
+        "reasoning": "Hiring 15 ML engineers indicates a significant internal shift towards enhancing Notion's AI capabilities, potentially leading to more competitive features.",
         "strategic_weight": 9,
         "velocity": "accelerating",
         "related_signal_ids": [
@@ -82,9 +83,9 @@
       "raw_content": "New GitHub Actions integration: Failed workflows automatically create Linear issues with full context. AI assigns to the right team member based on CODEOWNERS and recent commit history. Priority suggested based on affected services.",
       "detected_at": "2026-02-23T16:00:00Z",
       "classification": {
-        "category": "offensive_move",
-        "confidence": 0.7,
-        "reasoning": "Linear's GitHub Actions integration with auto-triage enhances its appeal to development teams, potentially attracting new customers with this advanced feature.",
+        "category": "defensive_move",
+        "confidence": 0.85,
+        "reasoning": "Linear's GitHub Actions integration enhances their existing offering, likely in response to user demand and market pressure to stay competitive in DevOps tooling.",
         "strategic_weight": 5,
         "velocity": "steady",
         "related_signal_ids": [
@@ -105,9 +106,9 @@
       "detected_at": "2026-02-27T10:00:00Z",
       "classification": {
         "category": "offensive_move",
-        "confidence": 0.75,
-        "reasoning": "Launching 'Linear Insights' with predictive analytics capabilities positions Linear for more enterprise deals, indicating an aggressive growth strategy.",
-        "strategic_weight": 6,
+        "confidence": 0.9,
+        "reasoning": "Linear Insights is a new premium feature that directly competes with other analytics and project management tools, indicating an offensive move to capture additional revenue streams.",
+        "strategic_weight": 8,
         "velocity": "accelerating",
         "related_signal_ids": [
           "sig-004",
@@ -126,11 +127,11 @@
       "raw_content": "@karrisaarinen: 'We're building towards a future where engineering teams don't plan sprints — they set objectives and the system orchestrates the work. Announcing something big next month. 🧵'",
       "detected_at": "2026-02-26T18:30:00Z",
       "classification": {
-        "category": "offensive_move",
-        "confidence": 0.65,
-        "reasoning": "The CEO's hint at 'autonomous engineering pods' suggests future innovative features, which could attract more customers, though the impact is less immediate.",
+        "category": "internal_shift",
+        "confidence": 0.6,
+        "reasoning": "The CEO's tweet about 'autonomous engineering pods' hints at a potential internal shift towards more innovative, AI-driven product development, but lacks concrete details.",
         "strategic_weight": 4,
-        "velocity": "accelerating",
+        "velocity": "decelerating",
         "related_signal_ids": [
           "sig-004",
           "sig-005"
@@ -150,9 +151,9 @@
       "classification": {
         "category": "ecosystem_play",
         "confidence": 0.95,
-        "reasoning": "Coda's strategic partnership with Atlassian integrates their product deeply into a larger ecosystem, enhancing its value proposition to joint customers.",
+        "reasoning": "Coda's strategic partnership with Atlassian is a clear ecosystem play, expanding Coda's reach through deep integration and joint go-to-market efforts.",
         "strategic_weight": 9,
-        "velocity": "steady",
+        "velocity": "accelerating",
         "related_signal_ids": [
           "sig-008"
         ]
@@ -170,12 +171,12 @@
       "detected_at": "2026-02-25T15:00:00Z",
       "classification": {
         "category": "offensive_move",
-        "confidence": 0.8,
-        "reasoning": "Launching AI Packs for engineering workflows positions Coda to capture more of the engineering team market share with advanced automation capabilities.",
+        "confidence": 0.85,
+        "reasoning": "Coda's AI Packs for engineering workflows introduce competitive AI-driven features, directly challenging other workflow and project management tools.",
         "strategic_weight": 7,
         "velocity": "accelerating",
         "related_signal_ids": [
-          "sig-002",
+          "sig-001",
           "sig-003",
           "sig-007"
         ]
@@ -193,12 +194,13 @@
       "detected_at": "2026-02-27T08:00:00Z",
       "classification": {
         "category": "internal_shift",
-        "confidence": 0.9,
-        "reasoning": "Notion's reported $200M funding round at a $15B valuation indicates significant investment in AI and enterprise expansion, signaling a strategic growth phase.",
-        "strategic_weight": 10,
+        "confidence": 0.8,
+        "reasoning": "Notion's reported $200M funding round at a $15B valuation indicates a significant internal shift, with plans to enhance AI capabilities and expand enterprise sales, especially in EMEA and APAC.",
+        "strategic_weight": 9,
         "velocity": "accelerating",
         "related_signal_ids": [
           "sig-001",
+          "sig-002",
           "sig-003"
         ]
       }
@@ -214,12 +216,15 @@
       "raw_content": "Linear Startup plan pricing update: Now available for teams of any size with no minimum seat requirement. $8/user/month gets you everything in Plus, ideal for fast-moving product teams.",
       "detected_at": "2026-02-28T09:00:00Z",
       "classification": {
-        "category": "offensive_move",
-        "confidence": 0.7,
-        "reasoning": "Removing seat minimums for Linear's Startup plan is a competitive move to capture early-stage startups, potentially gaining market share in this segment.",
+        "category": "defensive_move",
+        "confidence": 0.75,
+        "reasoning": "Linear's removal of seat minimums for their Startup plan is a defensive move to capture early-stage startups, responding to market pressure for more flexible pricing models.",
         "strategic_weight": 3,
         "velocity": "steady",
-        "related_signal_ids": []
+        "related_signal_ids": [
+          "sig-004",
+          "sig-009-manual"
+        ]
       }
     }
   ]

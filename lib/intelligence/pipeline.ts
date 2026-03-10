@@ -79,7 +79,7 @@ export async function runPipeline(
       timestamps.red_teamed = new Date().toISOString();
       return result;
     }),
-    predictScenarios(classifiedSignals, userProduct).then((result) => {
+    predictScenarios(classifiedSignals, JSON.stringify(insights), userProduct).then((result) => {
       timestamps.scenarios_generated = new Date().toISOString();
       return result;
     }),
@@ -95,10 +95,10 @@ export async function runPipeline(
 
   // ─── Stage 5: Quality Judge ───
   console.log('[Pipeline] Stage 5: Judging quality...');
-  const quality = await judgeQuality(insights, challenges, scenarios, userProduct);
+  const quality = await judgeQuality(insights, challenges, verification, scenarios, userProduct);
   const qualityScores = Array.isArray(quality?.scores) ? quality.scores : [];
   const digestQualityGrade = quality?.digest_quality_grade ?? 'C';
-  const executiveSummaryDraft = quality?.executive_summary_draft ?? 'No executive summary generated.';
+  const executiveSummaryDraft = quality?.executive_summary ?? 'No executive summary generated.';
   timestamps.quality_judged = new Date().toISOString();
 
   // ─── Assemble Final Digest ───
