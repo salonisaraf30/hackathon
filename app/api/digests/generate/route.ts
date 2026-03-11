@@ -21,13 +21,28 @@ export async function POST(req: NextRequest) {
       () => generateDigest(user.id)
     );
 
+    // Handle case where pipeline failed and returned cached/incomplete result
+    if (!trace.final_digest) {
+      return NextResponse.json({
+        success: false,
+        request_id: requestId,
+        digest_id: digestId,
+        error: 'Pipeline failed to generate digest',
+        pipeline_trace: {
+          timestamps: trace.timestamps,
+          stages_completed: trace.stages_completed ?? 0,
+          token_usage: trace.token_usage,
+        }
+      }, { status: 500 });
+    }
+
     return NextResponse.json({
       success: true,
       request_id: requestId,
       digest_id: digestId,
       quality_grade: trace.final_digest.quality_grade,
-      insights_count: trace.final_digest.insights.length,
-      scenarios_count: trace.final_digest.scenarios.scenarios.length,
+      insights_count: trace.final_digest.insights?.length ?? 0,
+      scenarios_count: trace.final_digest.scenarios?.scenarios?.length ?? 0,
       // Send the pipeline trace for the UI to animate
       pipeline_trace: {
         timestamps: trace.timestamps,

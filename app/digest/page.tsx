@@ -384,6 +384,83 @@ export default function DigestPage() {
             </div>
           </div>
 
+          {/* Action Summary - What Needs to Be Done */}
+          {insights.length > 0 && (
+            <div className="p-4 rounded-lg space-y-3" style={{ border: "2px solid #00FF41", backgroundColor: "rgba(0,255,65,0.05)" }}>
+              <div className="flex items-center justify-between">
+                <h3 className="text-[13px] text-[#00FF41]" style={SM}>⚡ ACTION SUMMARY — WHAT NEEDS TO BE DONE</h3>
+                <span className="text-[11px] px-2 py-0.5 rounded" style={{ color: "#00FF41", border: "1px solid #00FF41", ...SM }}>
+                  {Object.values(checkedActions).filter(Boolean).length}/{insights.filter(i => i.recommended_action).length} DONE
+                </span>
+              </div>
+              <div className="space-y-2">
+                {/* High Priority Actions */}
+                {insights.filter(i => (i.urgency ?? "").toUpperCase() === "HIGH" && i.recommended_action).length > 0 && (
+                  <div>
+                    <p className="text-[11px] text-[#FF00FF] mb-1" style={SM}>🔴 HIGH PRIORITY</p>
+                    {insights.filter(i => (i.urgency ?? "").toUpperCase() === "HIGH" && i.recommended_action).map((insight, idx) => {
+                      const actionKey = `action-high-${idx}`;
+                      return (
+                        <div key={actionKey} className="flex items-start gap-2 py-1.5 px-2 rounded mb-1" style={{ backgroundColor: "rgba(255,0,255,0.1)" }}>
+                          <Checkbox 
+                            checked={checkedActions[actionKey] || false} 
+                            onCheckedChange={(v) => setCheckedActions((p) => ({ ...p, [actionKey]: !!v }))} 
+                            className="mt-0.5 border-[#FF00FF] data-[state=checked]:bg-[#FF00FF]" 
+                          />
+                          <div className="flex-1 text-[12px]" style={IBM}>
+                            <span className={checkedActions[actionKey] ? "text-[#888888] line-through" : "text-[#888888]"}>{insight.recommended_action}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {/* Medium Priority Actions */}
+                {insights.filter(i => ["MED", "MEDIUM"].includes((i.urgency ?? "").toUpperCase()) && i.recommended_action).length > 0 && (
+                  <div>
+                    <p className="text-[11px] text-[#00FFFF] mb-1" style={SM}>🟡 MEDIUM PRIORITY</p>
+                    {insights.filter(i => ["MED", "MEDIUM"].includes((i.urgency ?? "").toUpperCase()) && i.recommended_action).map((insight, idx) => {
+                      const actionKey = `action-med-${idx}`;
+                      return (
+                        <div key={actionKey} className="flex items-start gap-2 py-1.5 px-2 rounded mb-1" style={{ backgroundColor: "rgba(0,255,255,0.1)" }}>
+                          <Checkbox 
+                            checked={checkedActions[actionKey] || false} 
+                            onCheckedChange={(v) => setCheckedActions((p) => ({ ...p, [actionKey]: !!v }))} 
+                            className="mt-0.5 border-[#00FFFF] data-[state=checked]:bg-[#00FFFF]" 
+                          />
+                          <div className="flex-1 text-[12px]" style={IBM}>
+                            <span className={checkedActions[actionKey] ? "text-[#888888] line-through" : "text-[#888888]"}>{insight.recommended_action}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {/* Low Priority Actions */}
+                {insights.filter(i => !["HIGH", "MED", "MEDIUM"].includes((i.urgency ?? "").toUpperCase()) && i.recommended_action).length > 0 && (
+                  <div>
+                    <p className="text-[11px] text-[#00FF41] mb-1" style={SM}>🟢 LOW PRIORITY</p>
+                    {insights.filter(i => !["HIGH", "MED", "MEDIUM"].includes((i.urgency ?? "").toUpperCase()) && i.recommended_action).map((insight, idx) => {
+                      const actionKey = `action-low-${idx}`;
+                      return (
+                        <div key={actionKey} className="flex items-start gap-2 py-1.5 px-2 rounded mb-1" style={{ backgroundColor: "rgba(0,255,65,0.1)" }}>
+                          <Checkbox 
+                            checked={checkedActions[actionKey] || false} 
+                            onCheckedChange={(v) => setCheckedActions((p) => ({ ...p, [actionKey]: !!v }))} 
+                            className="mt-0.5 border-[#00FF41] data-[state=checked]:bg-[#00FF41]" 
+                          />
+                          <div className="flex-1 text-[12px]" style={IBM}>
+                            <span className={checkedActions[actionKey] ? "text-[#888888] line-through" : "text-[#888888]"}>{insight.recommended_action}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* User Context */}
           {strategy.user_context && (
             <div className="p-4 rounded-lg space-y-2" style={{ border: "1px solid rgba(0,255,255,0.4)", backgroundColor: "rgba(0,255,255,0.05)" }}>
